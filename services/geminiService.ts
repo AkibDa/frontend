@@ -2,9 +2,13 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY || '');
-  
   try {
+    const apiKey = import.meta.env.VITE_API_KEY;
+    if (!apiKey) {
+      throw new Error("VITE_API_KEY environment variable is not set. Please configure your Gemini API key.");
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       generationConfig: {

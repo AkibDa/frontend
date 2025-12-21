@@ -19,7 +19,7 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [origPrice, setOrigPrice] = useState(100);
-  const [discPrice] = useState(40);
+  const discPrice = 40;
   const [tags, setTags] = useState<string[]>(['Veg']);
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [nutritionalInfo, setNutritionalInfo] = useState<any>(null);
