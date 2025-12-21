@@ -2,11 +2,10 @@
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { UserRole } from './types';
-import Splash from './pages/Splash';
-import Auth from './pages/Auth';
-import IDVerification from './pages/IDVerification';
-import UserLayout from './layouts/UserLayout';
-import StaffLayout from './layouts/StaffLayout';
+import Splash from './Pages/Splash';
+import Auth from './Pages/Auth';
+import UserLayout from './Layouts/UserLayout';
+import StaffLayout from './Layouts/StaffLayout';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const SmoothBackground: React.FC = () => (
@@ -44,7 +43,7 @@ const NavigationHandler: React.FC = () => {
         </motion.div>
       ) : !isVerified ? (
         <motion.div key="verify" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02 }} className="h-full">
-          <IDVerification />
+          <Auth verifyOnly />
         </motion.div>
       ) : userRole === UserRole.USER ? (
         <motion.div key="user" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MapPin, Navigation, Info, ChevronRight, X, Search, Layers, Compass, Salad, Pizza, Sandwich } from 'lucide-react';
+import { MapPin, Navigation, ChevronRight, X, Search, Layers, Compass, Salad, Pizza, Sandwich } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 

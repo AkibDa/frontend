@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Clock, MapPin, CheckCircle2, ShoppingBag, Zap, BellRing, ChefHat, UtensilsCrossed } from 'lucide-react';
+import { QrCode, MapPin, ShoppingBag, Zap, BellRing, ChefHat, UtensilsCrossed } from 'lucide-react';
 
 const MyOrders: React.FC = () => {
   const { orders } = useApp();

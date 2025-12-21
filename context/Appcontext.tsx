@@ -22,7 +22,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [onboarded, setOnboarded] = useState(false);
   const [isVerified, setVerified] = useState(false);
-  const [managedCafeteriaId, setManagedCafeteriaId] = useState('cafe-1'); // Default for demo
+  const [managedCafeteriaId] = useState('cafe-1');
   const [cafeterias, setCafeterias] = useState<Cafeteria[]>(INITIAL_CAFETERIAS);
   const [deals, setDeals] = useState<FoodDeal[]>(INITIAL_DEALS);
   const [orders, setOrders] = useState<Order[]>([]);

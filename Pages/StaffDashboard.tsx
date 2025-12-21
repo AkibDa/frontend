@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { TrendingUp, Users, Package, Clock, Edit3, Power, Star, Eye, Zap, Target, Apple, ShieldCheck, Sparkles } from 'lucide-react';
+import { TrendingUp, Users, Package, Clock, Edit3, Power, Star, Eye, Zap, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const StaffDashboard: React.FC = () => {

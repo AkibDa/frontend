@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Check, User, Clock, Package, Zap, ChevronRight, CheckCircle2, Utensils, ShoppingBag, Timer } from 'lucide-react';
+import { Check, User, Clock, Package, Zap, CheckCircle2, Utensils, ShoppingBag, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const IncomingReservations: React.FC = () => {

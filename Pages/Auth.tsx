@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, Globe } from 'lucide-react';
+import { Mail, Lock, LogIn} from 'lucide-react';
 import { UserRole } from '../types';
 import { useApp } from '../context/AppContext';
 
-const Auth: React.FC = () => {
+interface AuthProps {
+  verifyOnly?: boolean;
+}
+
+const Auth: React.FC<AuthProps> = () => {
   const { setUserRole } = useApp();
   const [role, setRole] = useState<UserRole>(UserRole.USER);
 

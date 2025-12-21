@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, ListChecks, User, Plus, Leaf, ChefHat, PackageCheck } from 'lucide-react';
-import StaffDashboard from '../pages/StaffDashboard';
-import QueueManager from '../pages/QueueManager';
-import IncomingReservations from '../pages/IncomingReservations';
-import Profile from '../pages/Profile';
-import CreatePost from '../pages/CreatePost';
+import { LayoutDashboard, User, Plus, Leaf, ChefHat, PackageCheck } from 'lucide-react';
+import StaffDashboard from '../Pages/StaffDashboard';
+import QueueManager from '../Pages/QueueManager';
+import IncomingReservations from '../Pages/IncomingReservations';
+import Profile from '../Pages/Profile';
+import CreatePost from '../Pages/CreatePost';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const StaffLayout: React.FC = () => {

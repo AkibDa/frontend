@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Home, Map as MapIcon, ShoppingBag, User as UserIcon, Leaf } from 'lucide-react';
-import UserHome from '../pages/UserHome';
-import MapView from '../pages/MapView';
-import MyOrders from '../pages/MyOrders';
-import Profile from '../pages/Profile';
-import DealDetails from '../pages/DealDetails';
+import UserHome from '../Pages/UserHome';
+import MapView from '../Pages/MapView';
+import MyOrders from '../Pages/MyOrder';
+import Profile from '../Pages/Profile';
+import DealDetails from '../Pages/DealDetails';
 import { FoodDeal } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
