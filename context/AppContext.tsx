@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { UserRole, AppState, FoodDeal, Order, Cafeteria } from '../types';
 import { INITIAL_DEALS, INITIAL_CAFETERIAS } from '../constants';
@@ -31,11 +30,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setDeals(prevDeals => prevDeals.map(d => 
       d.id === dealId ? { ...d, isClaimed: true, quantity: Math.max(0, d.quantity - 1) } : d
     ));
-    
+
     const deal = deals.find(d => d.id === dealId);
     if (deal) {
       const newOrder: Order = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substring(2, 11),
         dealId: deal.id,
         foodName: deal.name,
         cafeteriaName: deal.cafeteriaName,
@@ -50,7 +49,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addDeal = (dealData: Omit<FoodDeal, 'id' | 'isClaimed'>) => {
     const newDeal: FoodDeal = {
       ...dealData,
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       isClaimed: false
     };
     setDeals(prev => [newDeal, ...prev]);
