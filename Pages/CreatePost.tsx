@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Camera, Sparkles, Loader2, Check, Apple, Zap, Droplets, Leaf, Target } from 'lucide-react';
+import { X, Camera, Sparkles, Loader2, Apple, Zap, Droplets, Target } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { analyzeFoodImage } from '../services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -19,7 +19,7 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [origPrice, setOrigPrice] = useState(100);
-  const [discPrice, setDiscPrice] = useState(40);
+  const discPrice = 40;
   const [tags, setTags] = useState<string[]>(['Veg']);
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [nutritionalInfo, setNutritionalInfo] = useState<any>(null);
