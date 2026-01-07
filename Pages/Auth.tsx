@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { UserRole } from '../types';
 import { useApp } from '../context/AppContext';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import api from '@/services/api';
+import { auth } from '@/firebaseConfig';
 
 interface AuthProps {
   verifyOnly?: boolean;
@@ -15,23 +18,69 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly }: AuthProps) => {
     userRole,
   } = useApp();
 
+  // Component State
   const [role, setRole] = useState<UserRole>(UserRole.USER);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log(
-      'Auth mounted:',
-      'contextRole=',
-      userRole,
-      'verifyOnly=',
-      verifyOnly
-    );
+    console.log('Auth mounted:', 'contextRole=', userRole, 'verifyOnly=', verifyOnly);
   }, [userRole, verifyOnly]);
 
-  const handleSignIn = () => {
-    console.log('Signing in with role:', role);
-    setUserRole(role);
-    setOnboarded(true);
-    setVerified(true);
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1. Authenticate with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log('Firebase login success:', userCredential.user.email);
+
+      // 2. If Staff is selected, verify against FastAPI backend
+      if (role === UserRole.STAFF) {
+        try {
+          // This call sends the Firebase ID Token automatically via api.ts interceptor
+          const response = await api.post('/auth/verify-staff');
+          
+          /**
+           * Your backend now returns:
+           * { "message": "Verified", "role": "manager", "stall_id": "...", "college_id": "..." }
+           */
+          const backendData = response.data;
+          console.log('Staff verification success:', backendData);
+
+          // Update context with the specific role assigned by the backend (manager/staff)
+          // If your UserRole enum supports it, use backendData.role
+          setUserRole(UserRole.STAFF); 
+          
+        } catch (err: any) {
+          console.error("Backend verification failed", err);
+          // This catches the CORS error or a 401/403 Unauthorized
+          const errorMessage = err.response?.data?.detail || "You are not authorized as a staff member in our system.";
+          throw new Error(errorMessage);
+        }
+      } else {
+        // Handle standard student/user login
+        setUserRole(UserRole.USER);
+      }
+
+      // 3. Update Global Context for successful session
+      setOnboarded(true);
+      setVerified(true);
+
+    } catch (err: any) {
+      setError(err.message || "An error occurred during sign in.");
+      console.error('Sign in error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,6 +90,7 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly }: AuthProps) => {
         <p className="text-gray-500">Sign in to continue your impact.</p>
       </div>
 
+      {/* Role Switcher */}
       <div className="bg-gray-100 p-1 rounded-2xl flex mb-10">
         <button
           onClick={() => setRole(UserRole.USER)}
@@ -64,38 +114,52 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly }: AuthProps) => {
         </button>
       </div>
 
+      {/* Error Message Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Input Fields */}
       <div className="space-y-4 mb-8">
         <div className="relative">
-          <Mail
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
+          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Email Address"
             className="w-full bg-gray-50 border border-gray-100 py-4 pl-12 pr-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500/20"
           />
         </div>
 
         <div className="relative">
-          <Lock
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
+          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             className="w-full bg-gray-50 border border-gray-100 py-4 pl-12 pr-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500/20"
           />
         </div>
       </div>
 
+      {/* Sign In Button */}
       <button
         onClick={handleSignIn}
-        className="w-full bg-green-600 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-green-100 hover:bg-green-700 transition-colors mb-6"
+        disabled={loading}
+        className={`w-full ${loading ? 'bg-gray-400' : 'bg-green-600'} text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 shadow-lg shadow-green-100 hover:bg-green-700 transition-colors mb-6`}
       >
-        <LogIn size={20} />
-        Sign In
+        {loading ? (
+          "Authenticating..."
+        ) : (
+          <>
+            <LogIn size={20} />
+            Sign In
+          </>
+        )}
       </button>
 
       <div className="flex items-center gap-4 mb-8 text-gray-400 text-xs font-medium">
@@ -105,7 +169,6 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly }: AuthProps) => {
       </div>
 
       <button
-        onClick={handleSignIn}
         className="w-full bg-white border border-gray-200 text-gray-700 py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
       >
         <img
