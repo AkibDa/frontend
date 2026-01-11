@@ -59,21 +59,9 @@ frontend/
 ├── Layouts/            # Layout wrappers
 │   ├── UserLayout.tsx  # User layout
 │   ├── StaffLayout.tsx # Staff layout
-│   └── StudentLayout.tsx
+│   └── StudentLayout.tsx # Student layout
 ├── context/            # React context (state)
 │   └── AppContext.tsx  # Global app state
-## 🎯 Available Scripts
-
-```bash
-npm run dev         # Start development server (runs on port 5000)
-npm run build       # Build for production
-npm run preview     # Preview production build
-npm run lint        # Run ESLint
-npm run type-check  # Check TypeScript types
-``` types.ts           # TypeScript type definitions
-├── constants.tsx      # Global constants
-├── styles.css         # Global styles
-└── tailwind.config.js # Tailwind CSS configuration
 ```
 
 ## 🎯 Available Scripts
