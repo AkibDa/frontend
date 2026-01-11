@@ -59,7 +59,7 @@ frontend/
 ├── Layouts/            # Layout wrappers
 │   ├── UserLayout.tsx  # User layout
 │   ├── StaffLayout.tsx # Staff layout
-│   └── StudentLayout.tsx
+│   └── StudentLayout.tsx # Student layout
 ├── context/            # React context (state)
 │   └── AppContext.tsx  # Global app state
 ## 🎯 Available Scripts
