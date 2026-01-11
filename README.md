@@ -1,8 +1,8 @@
-# 🌱 GreenPlate Frontend
+# 🌱 GreenPlate
 
 **Sustainable Food Waste Reduction Platform**
 
-A React-based web application that connects students and staff with surplus cafeteria food, reducing waste and promoting sustainability.
+A React-based mobile application that connects students and staff with surplus cafeteria food, reducing waste and promoting sustainability.
 
 ## ✨ Features
 
@@ -24,7 +24,7 @@ npm install
 # Start development server
 npm run dev
 
-# Open browser to http://localhost:5000
+# App will open automatically at http://localhost:5000
 ```
 
 ## 🛠️ Tech Stack
@@ -35,29 +35,45 @@ npm run dev
 - **Tailwind CSS** - Utility-first styling
 - **Framer Motion** - Smooth animations
 - **Lucide React** - Beautiful icons
-- **Google Generative AI** - AI-powered features
+- **Google Generative AI** - AI-powered food analysis
+- **Firebase** - Authentication and database
+- **Axios** - HTTP client for API requests
 
 ## 📂 Project Structure
 
 ```
 frontend/
 ├── Pages/              # Page components
-│   ├── Auth.tsx        # Authentication
-│   ├── UserHome.tsx    # User dashboard
-│   ├── StaffDashboard.tsx
-│   └── ...
+│   ├── Auth.tsx        # User authentication & login
+│   ├── UserHome.tsx    # User dashboard & food deals
+│   ├── StaffDashboard.tsx # Staff interface
+│   ├── CreatePost.tsx  # Create new food deal post
+│   ├── DealDetails.tsx # View deal information
+│   ├── MyOrder.tsx     # User's reservations
+│   ├── IncomingReservations.tsx # Staff incoming orders
+│   ├── MapView.tsx     # Cafeteria location map
+│   ├── QueueManager.tsx # Queue management
+│   ├── Profile.tsx     # User profile
+│   ├── Onboarding.tsx  # App onboarding flow
+│   └── Splash.tsx      # Splash screen
 ├── Layouts/            # Layout wrappers
-│   ├── UserLayout.tsx
-│   └── StaffLayout.tsx
+│   ├── UserLayout.tsx  # User layout
+│   ├── StaffLayout.tsx # Staff layout
+│   └── StudentLayout.tsx
 ├── context/            # React context (state)
-│   └── AppContext.tsx
-├── services/           # API services
-│   └── geminiService.ts
-├── App.tsx             # Main app component
-├── Index.tsx           # Entry point
-├── types.ts            # TypeScript types
-├── constants.tsx       # App constants
-└── styles.css          # Global styles
+│   └── AppContext.tsx  # Global app state
+## 🎯 Available Scripts
+
+```bash
+npm run dev         # Start development server (runs on port 5000)
+npm run build       # Build for production
+npm run preview     # Preview production build
+npm run lint        # Run ESLint
+npm run type-check  # Check TypeScript types
+``` types.ts           # TypeScript type definitions
+├── constants.tsx      # Global constants
+├── styles.css         # Global styles
+└── tailwind.config.js # Tailwind CSS configuration
 ```
 
 ## 🎯 Available Scripts
@@ -103,7 +119,6 @@ See [LICENSE](./LICENSE) file for details.
 ## 🆘 Support
 
 Having issues? Check:
-- [INSTALLATION.md](./INSTALLATION.md) troubleshooting section
 - [DEPENDENCIES.md](./DEPENDENCIES.md) for dependency info
 - Project issues on GitHub
 
