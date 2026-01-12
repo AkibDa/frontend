@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+ import React, { useState, useEffect } from 'react';
 import { Mail, Lock, LogIn, Send, CheckCircle } from 'lucide-react';
 import { UserRole } from '../types';
 import { useApp } from '../context/AppContext';
@@ -42,6 +42,15 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly }: AuthProps) => {
           .then(async (result) => {
             window.localStorage.removeItem('emailForSignIn');
             console.log('Passwordless login success for:', result.user.email);
+            try {
+              console.log('🔄 Verifying student with backend...');
+              const verifyResponse = await api.post('/auth/verify-student');
+              console.log('✅ Student verified:', verifyResponse.data);
+            } catch (error: any) {
+              console.error('❌ Verification failed:', error.response?.data || error.message);
+              setError('Failed to verify student account');
+              return;
+            }
             
             // Student role is assumed for email-link logins in this flow
             setUserRole(UserRole.USER);
@@ -95,8 +104,13 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly }: AuthProps) => {
     setLoading(true);
     try {
       // 1. Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth,email,password);
+      console.log('✅ Staff logged in:', userCredential.user.email)
+
       await signInWithEmailAndPassword(auth, email, password);
-      
+
+      //verify with backend
+      console.log('🔄 Verifying staff with backend...');
       // 2. FastAPI Verification
       const response = await api.post('/auth/verify-staff');
       console.log('Staff verification success:', response.data);
@@ -105,6 +119,7 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly }: AuthProps) => {
       setVerified(true);
       setOnboarded(true);
     } catch (err: any) {
+      console.error('❌ Staff login error:', err);
       const msg = err.response?.data?.detail || err.message || "Unauthorized staff access.";
       setError(msg);
     } finally {

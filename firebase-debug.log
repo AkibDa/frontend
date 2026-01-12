@@ -1,0 +1,226 @@
+[debug] [2026-01-12T13:03:43.718Z] ----------------------------------------------------------------------
+[debug] [2026-01-12T13:03:43.720Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\jeffcarter\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js emulators:start
+[debug] [2026-01-12T13:03:43.720Z] CLI Version:   15.2.1
+[debug] [2026-01-12T13:03:43.720Z] Platform:      win32
+[debug] [2026-01-12T13:03:43.720Z] Node Version:  v23.7.0
+[debug] [2026-01-12T13:03:43.721Z] Time:          Mon Jan 12 2026 18:33:43 GMT+0530 (India Standard Time)
+[debug] [2026-01-12T13:03:43.721Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-12T13:03:44.661Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-12T13:03:44.661Z] > authorizing via signed-in user (imsarkarjeet012006@gmail.com)
+[info] i  emulators: Starting emulators: auth {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: auth"}}
+[debug] [2026-01-12T13:03:44.669Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-01-12T13:03:44.669Z] [auth] Authentication Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-01-12T13:03:44.670Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"auth":[{"address":"127.0.0.1","family":"IPv4","port":9099}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-01-12T13:03:44.673Z] Write emulator hub locator at C:\Users\JEFFCA~1\AppData\Local\Temp\hub-greenplate-242c9.json
+[info] i  ui: downloading ui-v1.15.0.zip... {"metadata":{"emulator":{"name":"ui"},"message":"downloading ui-v1.15.0.zip..."}}
+[debug] [2026-01-12T13:03:49.310Z] >>> [apiv2][query] GET https://storage.googleapis.com/firebase-preview-drop/emulator/ui-v1.15.0.zip 
+[debug] [2026-01-12T13:03:49.628Z] <<< [apiv2][status] GET https://storage.googleapis.com/firebase-preview-drop/emulator/ui-v1.15.0.zip 200
+[debug] [2026-01-12T13:03:49.628Z] <<< [apiv2][body] GET https://storage.googleapis.com/firebase-preview-drop/emulator/ui-v1.15.0.zip [stream]
+[debug] [2026-01-12T13:03:50.289Z] Data is 3538469
+[debug] [2026-01-12T13:03:50.289Z] [unzip] Entry: client/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-01-12T13:03:50.289Z] [unzip] Processing entry: client\
+[debug] [2026-01-12T13:03:50.289Z] [unzip] mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\
+[debug] [2026-01-12T13:03:50.290Z] [unzip] Entry: client/favicon-16x16.png (compressed_size=293 bytes, uncompressed_size=293 bytes)
+[debug] [2026-01-12T13:03:50.290Z] [unzip] Processing entry: client\favicon-16x16.png
+[debug] [2026-01-12T13:03:50.290Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.291Z] [unzip] Writing file: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\favicon-16x16.png
+[debug] [2026-01-12T13:03:50.292Z] [unzip] Entry: client/safari-pinned-tab.svg (compressed_size=1433 bytes, uncompressed_size=2611 bytes)
+[debug] [2026-01-12T13:03:50.292Z] [unzip] Processing entry: client\safari-pinned-tab.svg
+[debug] [2026-01-12T13:03:50.292Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.293Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\safari-pinned-tab.svg
+[debug] [2026-01-12T13:03:50.296Z] [unzip] Entry: client/favicon.ico (compressed_size=2933 bytes, uncompressed_size=13294 bytes)
+[debug] [2026-01-12T13:03:50.296Z] [unzip] Processing entry: client\favicon.ico
+[debug] [2026-01-12T13:03:50.296Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.296Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\favicon.ico
+[debug] [2026-01-12T13:03:50.298Z] [unzip] Entry: client/index.html (compressed_size=1364 bytes, uncompressed_size=3071 bytes)
+[debug] [2026-01-12T13:03:50.298Z] [unzip] Processing entry: client\index.html
+[debug] [2026-01-12T13:03:50.298Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.298Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\index.html
+[debug] [2026-01-12T13:03:50.299Z] [unzip] Entry: client/android-chrome-192x192.png (compressed_size=2684 bytes, uncompressed_size=2684 bytes)
+[debug] [2026-01-12T13:03:50.299Z] [unzip] Processing entry: client\android-chrome-192x192.png
+[debug] [2026-01-12T13:03:50.299Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.300Z] [unzip] Writing file: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\android-chrome-192x192.png
+[debug] [2026-01-12T13:03:50.300Z] [unzip] Entry: client/apple-touch-icon.png (compressed_size=2123 bytes, uncompressed_size=2152 bytes)
+[debug] [2026-01-12T13:03:50.300Z] [unzip] Processing entry: client\apple-touch-icon.png
+[debug] [2026-01-12T13:03:50.300Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.300Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\apple-touch-icon.png
+[debug] [2026-01-12T13:03:50.302Z] [unzip] Entry: client/android-chrome-512x512.png (compressed_size=5369 bytes, uncompressed_size=5411 bytes)
+[debug] [2026-01-12T13:03:50.302Z] [unzip] Processing entry: client\android-chrome-512x512.png
+[debug] [2026-01-12T13:03:50.302Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.302Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\android-chrome-512x512.png
+[debug] [2026-01-12T13:03:50.303Z] [unzip] Entry: client/manifest.json (compressed_size=245 bytes, uncompressed_size=551 bytes)
+[debug] [2026-01-12T13:03:50.303Z] [unzip] Processing entry: client\manifest.json
+[debug] [2026-01-12T13:03:50.303Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.304Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\manifest.json
+[debug] [2026-01-12T13:03:50.305Z] [unzip] Entry: client/robots.txt (compressed_size=26 bytes, uncompressed_size=26 bytes)
+[debug] [2026-01-12T13:03:50.305Z] [unzip] Processing entry: client\robots.txt
+[debug] [2026-01-12T13:03:50.305Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.305Z] [unzip] Writing file: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\robots.txt
+[debug] [2026-01-12T13:03:50.306Z] [unzip] Entry: client/mstile-150x150.png (compressed_size=2034 bytes, uncompressed_size=2034 bytes)
+[debug] [2026-01-12T13:03:50.306Z] [unzip] Processing entry: client\mstile-150x150.png
+[debug] [2026-01-12T13:03:50.306Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.307Z] [unzip] Writing file: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\mstile-150x150.png
+[debug] [2026-01-12T13:03:50.307Z] [unzip] Entry: client/assets/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-01-12T13:03:50.308Z] [unzip] Processing entry: client\assets\
+[debug] [2026-01-12T13:03:50.308Z] [unzip] mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\
+[debug] [2026-01-12T13:03:50.308Z] [unzip] Entry: client/assets/index-BX-A56oj.js (compressed_size=582089 bytes, uncompressed_size=2092775 bytes)
+[debug] [2026-01-12T13:03:50.308Z] [unzip] Processing entry: client\assets\index-BX-A56oj.js
+[debug] [2026-01-12T13:03:50.308Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets
+[debug] [2026-01-12T13:03:50.308Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\index-BX-A56oj.js
+[debug] [2026-01-12T13:03:50.319Z] [unzip] Entry: client/assets/index-CjB9C900.css (compressed_size=35979 bytes, uncompressed_size=298654 bytes)
+[debug] [2026-01-12T13:03:50.319Z] [unzip] Processing entry: client\assets\index-CjB9C900.css
+[debug] [2026-01-12T13:03:50.319Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets
+[debug] [2026-01-12T13:03:50.319Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\index-CjB9C900.css
+[debug] [2026-01-12T13:03:50.321Z] [unzip] Entry: client/assets/index-BX-A56oj.js.map (compressed_size=2362482 bytes, uncompressed_size=10036679 bytes)
+[debug] [2026-01-12T13:03:50.321Z] [unzip] Processing entry: client\assets\index-BX-A56oj.js.map
+[debug] [2026-01-12T13:03:50.321Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets
+[debug] [2026-01-12T13:03:50.321Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\index-BX-A56oj.js.map
+[debug] [2026-01-12T13:03:50.358Z] [unzip] Entry: client/assets/extensions/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-01-12T13:03:50.358Z] [unzip] Processing entry: client\assets\extensions\
+[debug] [2026-01-12T13:03:50.358Z] [unzip] mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\extensions\
+[debug] [2026-01-12T13:03:50.358Z] [unzip] Entry: client/assets/extensions/default-extension.png (compressed_size=1646 bytes, uncompressed_size=1657 bytes)
+[debug] [2026-01-12T13:03:50.358Z] [unzip] Processing entry: client\assets\extensions\default-extension.png
+[debug] [2026-01-12T13:03:50.358Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\extensions
+[debug] [2026-01-12T13:03:50.359Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\extensions\default-extension.png
+[debug] [2026-01-12T13:03:50.360Z] [unzip] Entry: client/assets/img/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-01-12T13:03:50.360Z] [unzip] Processing entry: client\assets\img\
+[debug] [2026-01-12T13:03:50.360Z] [unzip] mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\img\
+[debug] [2026-01-12T13:03:50.360Z] [unzip] Entry: client/assets/img/database.png (compressed_size=29449 bytes, uncompressed_size=29988 bytes)
+[debug] [2026-01-12T13:03:50.360Z] [unzip] Processing entry: client\assets\img\database.png
+[debug] [2026-01-12T13:03:50.360Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\img
+[debug] [2026-01-12T13:03:50.360Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\img\database.png
+[debug] [2026-01-12T13:03:50.361Z] [unzip] Entry: client/assets/provider-icons/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-01-12T13:03:50.361Z] [unzip] Processing entry: client\assets\provider-icons\
+[debug] [2026-01-12T13:03:50.361Z] [unzip] mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\
+[debug] [2026-01-12T13:03:50.361Z] [unzip] Entry: client/assets/provider-icons/auth_service_saml.svg (compressed_size=575 bytes, uncompressed_size=1226 bytes)
+[debug] [2026-01-12T13:03:50.361Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_saml.svg
+[debug] [2026-01-12T13:03:50.361Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.361Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_saml.svg
+[debug] [2026-01-12T13:03:50.362Z] [unzip] Entry: client/assets/provider-icons/auth_service_phone.svg (compressed_size=261 bytes, uncompressed_size=414 bytes)
+[debug] [2026-01-12T13:03:50.362Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_phone.svg
+[debug] [2026-01-12T13:03:50.362Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.362Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_phone.svg
+[debug] [2026-01-12T13:03:50.363Z] [unzip] Entry: client/assets/provider-icons/auth_service_facebook.svg (compressed_size=289 bytes, uncompressed_size=457 bytes)
+[debug] [2026-01-12T13:03:50.363Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_facebook.svg
+[debug] [2026-01-12T13:03:50.363Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.363Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_facebook.svg
+[debug] [2026-01-12T13:03:50.364Z] [unzip] Entry: client/assets/provider-icons/auth_service_game_center.svg (compressed_size=991 bytes, uncompressed_size=3921 bytes)
+[debug] [2026-01-12T13:03:50.364Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_game_center.svg
+[debug] [2026-01-12T13:03:50.364Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.364Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_game_center.svg
+[debug] [2026-01-12T13:03:50.365Z] [unzip] Entry: client/assets/provider-icons/auth_service_apple.svg (compressed_size=230 bytes, uncompressed_size=334 bytes)
+[debug] [2026-01-12T13:03:50.365Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_apple.svg
+[debug] [2026-01-12T13:03:50.365Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.365Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_apple.svg
+[debug] [2026-01-12T13:03:50.365Z] [unzip] Entry: client/assets/provider-icons/auth_service_github.svg (compressed_size=466 bytes, uncompressed_size=838 bytes)
+[debug] [2026-01-12T13:03:50.365Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_github.svg
+[debug] [2026-01-12T13:03:50.366Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.366Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_github.svg
+[debug] [2026-01-12T13:03:50.366Z] [unzip] Entry: client/assets/provider-icons/auth_service_mslive.svg (compressed_size=203 bytes, uncompressed_size=378 bytes)
+[debug] [2026-01-12T13:03:50.366Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_mslive.svg
+[debug] [2026-01-12T13:03:50.366Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.367Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_mslive.svg
+[debug] [2026-01-12T13:03:50.367Z] [unzip] Entry: client/assets/provider-icons/auth_service_yahoo.svg (compressed_size=577 bytes, uncompressed_size=1182 bytes)
+[debug] [2026-01-12T13:03:50.367Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_yahoo.svg
+[debug] [2026-01-12T13:03:50.367Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.367Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_yahoo.svg
+[debug] [2026-01-12T13:03:50.368Z] [unzip] Entry: client/assets/provider-icons/auth_service_twitter.svg (compressed_size=444 bytes, uncompressed_size=751 bytes)
+[debug] [2026-01-12T13:03:50.368Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_twitter.svg
+[debug] [2026-01-12T13:03:50.368Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.369Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_twitter.svg
+[debug] [2026-01-12T13:03:50.369Z] [unzip] Entry: client/assets/provider-icons/auth_service_play_games.svg (compressed_size=565 bytes, uncompressed_size=1173 bytes)
+[debug] [2026-01-12T13:03:50.369Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_play_games.svg
+[debug] [2026-01-12T13:03:50.369Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.370Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_play_games.svg
+[debug] [2026-01-12T13:03:50.371Z] [unzip] Entry: client/assets/provider-icons/auth_service_email.svg (compressed_size=228 bytes, uncompressed_size=326 bytes)
+[debug] [2026-01-12T13:03:50.371Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_email.svg
+[debug] [2026-01-12T13:03:50.371Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.371Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_email.svg
+[debug] [2026-01-12T13:03:50.372Z] [unzip] Entry: client/assets/provider-icons/auth_service_google.svg (compressed_size=409 bytes, uncompressed_size=720 bytes)
+[debug] [2026-01-12T13:03:50.372Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_google.svg
+[debug] [2026-01-12T13:03:50.372Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.372Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_google.svg
+[debug] [2026-01-12T13:03:50.373Z] [unzip] Entry: client/assets/provider-icons/auth_service_oidc.svg (compressed_size=414 bytes, uncompressed_size=858 bytes)
+[debug] [2026-01-12T13:03:50.373Z] [unzip] Processing entry: client\assets\provider-icons\auth_service_oidc.svg
+[debug] [2026-01-12T13:03:50.373Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons
+[debug] [2026-01-12T13:03:50.373Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\assets\provider-icons\auth_service_oidc.svg
+[debug] [2026-01-12T13:03:50.373Z] [unzip] Entry: client/browserconfig.xml (compressed_size=491 bytes, uncompressed_size=822 bytes)
+[debug] [2026-01-12T13:03:50.373Z] [unzip] Processing entry: client\browserconfig.xml
+[debug] [2026-01-12T13:03:50.374Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.374Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\browserconfig.xml
+[debug] [2026-01-12T13:03:50.374Z] [unzip] Entry: client/favicon-32x32.png (compressed_size=475 bytes, uncompressed_size=475 bytes)
+[debug] [2026-01-12T13:03:50.374Z] [unzip] Processing entry: client\favicon-32x32.png
+[debug] [2026-01-12T13:03:50.374Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client
+[debug] [2026-01-12T13:03:50.375Z] [unzip] Writing file: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\client\favicon-32x32.png
+[debug] [2026-01-12T13:03:50.375Z] [unzip] Entry: server/ (compressed_size=0 bytes, uncompressed_size=0 bytes)
+[debug] [2026-01-12T13:03:50.375Z] [unzip] Processing entry: server\
+[debug] [2026-01-12T13:03:50.375Z] [unzip] mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\server\
+[debug] [2026-01-12T13:03:50.375Z] [unzip] Entry: server/server.mjs.map (compressed_size=217845 bytes, uncompressed_size=944978 bytes)
+[debug] [2026-01-12T13:03:50.376Z] [unzip] Processing entry: server\server.mjs.map
+[debug] [2026-01-12T13:03:50.376Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\server
+[debug] [2026-01-12T13:03:50.376Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\server\server.mjs.map
+[debug] [2026-01-12T13:03:50.380Z] [unzip] Entry: server/server.mjs (compressed_size=276407 bytes, uncompressed_size=933701 bytes)
+[debug] [2026-01-12T13:03:50.380Z] [unzip] Processing entry: server\server.mjs
+[debug] [2026-01-12T13:03:50.380Z] [unzip] else mkdir: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\server
+[debug] [2026-01-12T13:03:50.380Z] [unzip] deflating: C:\Users\jeffcarter\.cache\firebase\emulators\ui-v1.15.0\server\server.mjs
+[debug] [2026-01-12T13:03:50.389Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────────┬────────────────┬────────────────────────────┐
+│ Emulator       │ Host:Port      │ View in Emulator UI        │
+├────────────────┼────────────────┼────────────────────────────┤
+│ Authentication │ 127.0.0.1:9099 │ http://127.0.0.1:4000/auth │
+└────────────────┴────────────────┴────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[warn] !  canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web. {"metadata":{"emulator":{"name":"auth"},"message":"canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web."}}
+[info] i  To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=-SUsYLELHAo3RbMnNgjfOPNkBOema5uKfY8XFdwmJgrN10EoRUIU7T&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth {"metadata":{"emulator":{"name":"auth"},"message":"To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=-SUsYLELHAo3RbMnNgjfOPNkBOema5uKfY8XFdwmJgrN10EoRUIU7T&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth"}}
+[warn] !  canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web. {"metadata":{"emulator":{"name":"auth"},"message":"canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web."}}
+[info] i  To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=g4wzmeJqtpXc_vd1GZB2j8x9HbQLA45XUitLb1YCmdgNl7SkpRcA4u&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth {"metadata":{"emulator":{"name":"auth"},"message":"To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=g4wzmeJqtpXc_vd1GZB2j8x9HbQLA45XUitLb1YCmdgNl7SkpRcA4u&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth"}}
+[warn] !  canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web. {"metadata":{"emulator":{"name":"auth"},"message":"canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web."}}
+[info] i  To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=2hpuCCCf66lK1URtdKZ4ST42_CQpHbAo1IGTQtSxVllV_rEn_oqdM0&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth {"metadata":{"emulator":{"name":"auth"},"message":"To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=2hpuCCCf66lK1URtdKZ4ST42_CQpHbAo1IGTQtSxVllV_rEn_oqdM0&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth"}}
+[warn] !  canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web. {"metadata":{"emulator":{"name":"auth"},"message":"canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web."}}
+[info] i  To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=bncXSxrdjJUxBiRQDM9fNOUWIrrSEK6w-oLa1uoOQF2EkxXndS4S6f&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth {"metadata":{"emulator":{"name":"auth"},"message":"To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=bncXSxrdjJUxBiRQDM9fNOUWIrrSEK6w-oLa1uoOQF2EkxXndS4S6f&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth"}}
+[warn] !  canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web. {"metadata":{"emulator":{"name":"auth"},"message":"canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web."}}
+[info] i  To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=CsEw3Hm4YFpT0QRntANZWpk_AEfuPfUYTN9E_T-bZ1UaZr4-OoKoY_&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth {"metadata":{"emulator":{"name":"auth"},"message":"To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=CsEw3Hm4YFpT0QRntANZWpk_AEfuPfUYTN9E_T-bZ1UaZr4-OoKoY_&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth"}}
+[warn] !  canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web. {"metadata":{"emulator":{"name":"auth"},"message":"canHandleCodeInApp is unsupported in Auth Emulator. All OOB operations will complete via web."}}
+[info] i  To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=_D3NaZ4WeBXrx7jhpI6PbFffzWcJ66GYCFtJz6T6cQZdYLXv60ebNl&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth {"metadata":{"emulator":{"name":"auth"},"message":"To sign in as jeet.sarkar.cse.2024@tint.edu.in, follow this link: http://127.0.0.1:9099/emulator/action?mode=signIn&lang=en&oobCode=_D3NaZ4WeBXrx7jhpI6PbFffzWcJ66GYCFtJz6T6cQZdYLXv60ebNl&apiKey=fake-api-key&continueUrl=http%3A%2F%2Flocalhost%3A3000%2Fauth"}}
+[debug] [2026-01-12T13:38:19.300Z] Received signal SIGINT (Ctrl-C) 1
+[info]  
+[info] i  emulators: Received SIGINT (Ctrl-C) for the first time. Starting a clean shutdown. 
+[info] i  emulators: Please wait for a clean shutdown or send the SIGINT (Ctrl-C) signal again to stop right now. 
+[debug] [2026-01-12T13:38:19.303Z] Found emulator hub locator: {"version":"15.2.1","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"pid":16120}
+[debug] [2026-01-12T13:38:19.303Z] Delete emulator hub locator file: C:\Users\JEFFCA~1\AppData\Local\Temp\hub-greenplate-242c9.json
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[info] i  ui: Stopping Emulator UI {"metadata":{"emulator":{"name":"ui"},"message":"Stopping Emulator UI"}}
+[info] i  auth: Stopping Authentication Emulator {"metadata":{"emulator":{"name":"auth"},"message":"Stopping Authentication Emulator"}}
+[info] i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
+[info] i  logging: Stopping Logging Emulator {"metadata":{"emulator":{"name":"logging"},"message":"Stopping Logging Emulator"}}
+[debug] [2026-01-12T13:38:19.313Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[debug] [2026-01-12T13:38:21.120Z] Received signal SIGINT (Ctrl-C) 2
+[info]  
+[debug] [2026-01-12T13:38:21.120Z] Skipping clean onExit() and cleanShutdown()
+[warn] !  emulators: Received SIGINT (Ctrl-C) 2 times. You have forced the Emulator Suite to exit without waiting for 0 subprocess to finish. These processes may still be running on your machine:  
+[info] 
+┌──────────┬───────────┬─────┐
+│ Emulator │ Host:Port │ PID │
+└──────────┴───────────┴─────┘
+
+To force them to exit run:
+
+[info] TASKKILL  /T
+
+[debug] [2026-01-12T13:38:26.798Z] Error: Timed out.
+    at Timeout.<anonymous> (C:\Users\jeffcarter\AppData\Roaming\npm\node_modules\firebase-tools\lib\utils.js:308:49)
+    at listOnTimeout (node:internal/timers:614:17)
+    at process.processTimers (node:internal/timers:549:7)
+[error] 
+[error] Error: An unexpected error has occurred.
