@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from 'firebase/auth';
+import { getAuth,connectAuthEmulator } from 'firebase/auth';
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -14,3 +14,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db  =getFirestore(app);
+
+auth.onAuthStateChanged((user) => {
+  if(user){
+    console.log('✅ User signed in:', user.email);
+  }
+  else{
+    console.log('❌ No user signed in');
+  }
+})
+// if (window.location.hostname === "localhost") {
+//   connectAuthEmulator(auth, "http://localhost:9099");
+//   console.log("🚀 Connected to Firebase Auth Emulator");
+// }
