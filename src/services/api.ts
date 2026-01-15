@@ -79,9 +79,7 @@ export const verifyOrder = async (orderData: {
   razorpay_payment_id: string;
   razorpay_order_id: string;
   razorpay_signature: string;
-  items: Array<{ item_id: string; quantity: number }>;
-  stall_id: string;
-  amount: number;
+  internal_order_id: string;
 }) => {
   const response = await api.post('/user/order/verify', orderData);
   return response.data;

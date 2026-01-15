@@ -99,16 +99,20 @@ const UserHome: React.FC = () => {
         user.displayName || ''
       );
 
-      // 3. If Payment is successful, Verify & Create Order in Backend
-      if (result.success && result.paymentId) {
-        // Ensure your 'api' service has verifyOrder defined
+      console.log("🔥 VERIFY PAYLOAD", {
+      razorpay_payment_id: result.paymentId,
+      razorpay_order_id: result.orderId,
+      razorpay_signature: result.signature,
+      internal_order_id: result.internalOrderId,
+    });
+
+      // 3. verify payment on backend
+      if (result.success) {
         await verifyOrder({
-          razorpay_payment_id: result.paymentId,
-          razorpay_order_id: result.orderId || '', 
-          razorpay_signature: result.signature || '',
-          items: cartItems,
-          stall_id: firstItem.stallId,
-          amount: cartTotal
+          razorpay_payment_id: result.paymentId!,
+          razorpay_order_id: result.orderId!, 
+          razorpay_signature: result.signature!,
+          internal_order_id: result.internalOrderId!,
         });
 
         setCart(new Map());
