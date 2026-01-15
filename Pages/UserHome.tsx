@@ -1,209 +1,336 @@
-"use client"
-
-import React, { useState, useEffect } from "react"
-import { Search, Plus, ShoppingCart, Minus, Loader2 } from "lucide-react"
-import { motion } from "framer-motion"
-import { auth } from "@/firebaseConfig"
-import { initiatePayment } from "@/services/paymentService"
-import { getUserMenu } from "@/services/api"
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Minus, Loader2, ShoppingBag, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { auth } from '@/firebaseConfig';
+import { initiatePayment } from '@/services/paymentService';
+import { getUserMenu ,verifyOrder} from '@/services/api';
 
 interface MenuItem {
-  item_id: string
-  name: string
-  price: number
-  description?: string
-  image_url?: string
-  category?: string
-  is_available: boolean
+  item_id: string;
+  name: string;
+  price: number;
+  description?: string;
+  image_url?: string;
+  category?: string;
+  is_available: boolean;
 }
 
 interface Stall {
-  stall_id: string
-  stall_name: string
-  menu_items: MenuItem[]
+  stall_id: string;
+  stall_name: string;
+  menu_items: MenuItem[];
 }
 
-interface UserHomeProps {
-  onSelectDeal?: (deal: any) => void
-}
-
-const UserHome: React.FC<UserHomeProps> = ({ onSelectDeal }) => {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [cart, setCart] = useState<Map<string, { item: MenuItem; stallId: string; quantity: number }>>(new Map())
-  const [isCheckingOut, setIsCheckingOut] = useState(false)
-  const [stalls, setStalls] = useState<Stall[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+const UserHome: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cart, setCart] = useState<Map<string, { item: MenuItem; stallId: string; quantity: number }>>(new Map());
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [stalls, setStalls] = useState<Stall[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
     const fetchMenu = async () => {
       try {
-        setLoading(true)
-        const menuData = await getUserMenu()
-        setStalls(menuData.stalls || [])
-        setError(null)
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load menu")
+        setLoading(true);
+        const menuData = await getUserMenu();
+        setStalls(menuData.stalls || []);
+      } catch (err) {
+        console.error('Failed to load menu');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchMenu()
-  }, [])
+    };
+    fetchMenu();
+  }, []);
 
-  const addToCart = (item: MenuItem, stallId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const cartKey = `${stallId}-${item.item_id}`
-    const newCart = new Map(cart)
-    const existing = newCart.get(cartKey)
+  const addToCart = (item: MenuItem, stallId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const cartKey = `${stallId}-${item.item_id}`;
+    const newCart = new Map(cart);
+    const existing = newCart.get(cartKey);
     if (existing) {
-      newCart.set(cartKey, { ...existing, quantity: existing.quantity + 1 })
+      newCart.set(cartKey, { ...existing, quantity: existing.quantity + 1 });
     } else {
-      newCart.set(cartKey, { item, stallId, quantity: 1 })
+      newCart.set(cartKey, { item, stallId, quantity: 1 });
     }
-    setCart(newCart)
-  }
+    setCart(newCart);
+  };
 
-  const removeFromCart = (item: MenuItem, stallId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    const cartKey = `${stallId}-${item.item_id}`
-    const newCart = new Map(cart)
-    const existing = newCart.get(cartKey)
+  const removeFromCart = (item: MenuItem, stallId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const cartKey = `${stallId}-${item.item_id}`;
+    const newCart = new Map(cart);
+    const existing = newCart.get(cartKey);
     if (existing && existing.quantity > 1) {
-      newCart.set(cartKey, { ...existing, quantity: existing.quantity - 1 })
+      newCart.set(cartKey, { ...existing, quantity: existing.quantity - 1 });
     } else {
-      newCart.delete(cartKey)
+      newCart.delete(cartKey);
     }
-    setCart(newCart)
-  }
+    setCart(newCart);
+  };
 
-  const cartTotal = Array.from(cart.values()).reduce((sum, item) => sum + item.item.price * item.quantity, 0)
-  const cartItemCount = Array.from(cart.values()).reduce((sum, item) => sum + item.quantity, 0)
+  const cartTotal = Array.from(cart.values()).reduce((sum, item) => sum + item.item.price * item.quantity, 0);
+  const cartItemCount = Array.from(cart.values()).reduce((sum, item) => sum + item.quantity, 0);
 
   const handleCheckout = async () => {
-    if (cart.size === 0) return
-    setIsCheckingOut(true)
+    if (cart.size === 0) return;
+    setIsCheckingOut(true);
+    
     try {
-      const user = auth.currentUser
+      const user = auth.currentUser;
       if (!user) {
-        alert("Please sign in to continue")
-        return
+        alert('Please sign in');
+        return;
       }
-      const firstItem = Array.from(cart.values())[0]
+
+      // 1. Prepare Data
+      const firstItem = Array.from(cart.values())[0];
       const cartItems = Array.from(cart.values()).map((item) => ({
         item_id: item.item.item_id,
         quantity: item.quantity,
-      }))
-      const result = await initiatePayment(cartItems, firstItem.stallId, user.email || "", user.displayName || "")
+      }));
+
+      // 2. Trigger Razorpay Checkout
+      const result = await initiatePayment(
+        cartItems, 
+        firstItem.stallId, 
+        user.email || '', 
+        user.displayName || ''
+      );
+
+      console.log("🔥 VERIFY PAYLOAD", {
+      razorpay_payment_id: result.paymentId,
+      razorpay_order_id: result.orderId,
+      razorpay_signature: result.signature,
+      internal_order_id: result.internalOrderId,
+    });
+
+      // 3. verify payment on backend
       if (result.success) {
-        setCart(new Map())
-        alert("✅ Payment successful!")
+        await verifyOrder({
+          razorpay_payment_id: result.paymentId!,
+          razorpay_order_id: result.orderId!, 
+          razorpay_signature: result.signature!,
+          internal_order_id: result.internalOrderId!,
+        });
+
+        setCart(new Map());
+        setShowCart(false);
+        alert('✅ Order placed successfully!');
+      } else {
+        alert(`❌ Payment failed: ${result.error}`);
       }
+
     } catch (error: any) {
-      alert(`❌ Error: ${error.message}`)
+      console.error("Checkout Error:", error);
+      alert(`❌ Error: ${error.message || 'Something went wrong'}`);
     } finally {
-      setIsCheckingOut(false)
+      setIsCheckingOut(false);
     }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+      </div>
+    );
   }
 
-  if (loading) return (
-    <div className="flex flex-col h-full bg-background items-center justify-center">
-      <Loader2 className="w-12 h-12 text-emerald-600 animate-spin mb-4" />
-      <p className="text-muted-foreground font-semibold">Loading menu...</p>
-    </div>
-  )
-
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="p-8 pt-4 shrink-0">
-        <header className="mb-10 flex justify-between items-end">
-          <div>
-            <h1 className="text-4xl font-black text-foreground tracking-tighter">Market</h1>
-            <p className="text-emerald-600 font-black uppercase tracking-[0.4em] text-[10px] mt-2">Fresh Menu</p>
-          </div>
-          <div className="flex items-center gap-3 bg-card px-5 py-2.5 rounded-2xl border border-border shadow-sm">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
-            <span className="text-[10px] font-black text-foreground uppercase tracking-widest">Live</span>
-          </div>
-        </header>
-
-        <div className="relative mb-2">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Search Header */}
+      <div className="px-6 pt-6 pb-4 bg-white">
+        <h1 style={{ fontFamily: 'Geom' }} className="text-2xl font-bold text-gray-900 mb-4">
+          Menu
+        </h1>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search menu..."
-            className="w-full bg-card border border-border py-6 pl-16 pr-8 rounded-[2.5rem] focus:outline-none focus:ring-4 focus:ring-emerald-500/20 text-foreground placeholder:text-muted-foreground transition-all font-bold text-base shadow-sm"
+            placeholder="Search dishes..."
+            className="w-full bg-gray-50 border border-gray-200 py-2.5 pl-10 pr-4 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-40 hide-scrollbar">
+      {/* Menu List */}
+      <div className="flex-1 overflow-y-auto pb-32">
         {stalls.map((stall) => (
-          <section key={stall.stall_id} className="mb-14">
-            <div className="px-8 flex items-center justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-card rounded-2xl overflow-hidden border border-border shadow-sm flex items-center justify-center">
-                  <span className="text-2xl">🍽️</span>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black text-foreground tracking-tighter leading-none mb-1">{stall.stall_name}</h2>
-                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{stall.menu_items.length} items</span>
-                </div>
-              </div>
+          <div key={stall.stall_id} className="mb-8">
+            <div className="px-6 mb-3">
+              <h2 style={{ fontFamily: 'Geom' }} className="text-lg font-bold text-gray-900">
+                {stall.stall_name}
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">{stall.menu_items.length} items available</p>
             </div>
 
-            <div className="flex gap-8 overflow-x-auto px-8 hide-scrollbar">
+            <div className="space-y-3 px-6">
               {stall.menu_items.map((item) => {
-                const cartKey = `${stall.stall_id}-${item.item_id}`
-                const quantity = cart.get(cartKey)?.quantity || 0
+                const cartKey = `${stall.stall_id}-${item.item_id}`;
+                const qty = cart.get(cartKey)?.quantity || 0;
                 return (
-                  <motion.div
+                  <div
                     key={item.item_id}
-                    whileTap={{ scale: 0.96 }}
-                    className="min-w-[300px] bg-card rounded-[3rem] overflow-hidden border border-border flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.04)]"
+                    className="bg-white rounded-2xl p-4 border border-gray-100 flex gap-4"
                   >
-                    <div className="h-52 bg-gradient-to-br from-emerald-100 to-emerald-50 flex items-center justify-center">
-                      <span className="text-6xl">{item.image_url || "🍽️"}</span>
+                    {/* Image */}
+                    <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-3xl flex-shrink-0">
+                      {item.image_url || '🍽️'}
                     </div>
-                    <div className="p-8 flex-1 flex flex-col">
-                      <h4 className="font-black text-2xl text-foreground tracking-tighter leading-tight mb-3">{item.name}</h4>
-                      <p className="text-sm text-muted-foreground mb-6 line-clamp-2">{item.description}</p>
-                      <div className="mt-auto flex items-center justify-between">
-                        <span className="text-3xl font-black text-foreground tracking-tighter">₹{item.price}</span>
-                        {quantity === 0 ? (
-                          <button onClick={(e) => addToCart(item, stall.stall_id, e)} className="w-14 h-14 bg-foreground text-background rounded-[1.75rem] flex items-center justify-center shadow-xl active:scale-90 transition-all">
-                            <Plus size={24} strokeWidth={4} />
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <h4 style={{ fontFamily: 'Geom' }} className="font-semibold text-gray-900 text-sm mb-0.5">
+                        {item.name}
+                      </h4>
+                      <p className="text-xs text-gray-500 line-clamp-1 mb-2">{item.description}</p>
+                      <p style={{ fontFamily: 'Geom' }} className="text-base font-bold text-gray-900">
+                        ₹{item.price}
+                      </p>
+                    </div>
+
+                    {/* Add/Remove Buttons */}
+                    <div className="flex items-center">
+                      {qty === 0 ? (
+                        <button
+                          onClick={(e) => addToCart(item, stall.stall_id, e)}
+                          className="w-9 h-9 bg-emerald-600 text-white rounded-lg flex items-center justify-center hover:bg-emerald-700 transition-colors"
+                        >
+                          <Plus size={18} strokeWidth={2.5} />
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1">
+                          <button
+                            onClick={(e) => removeFromCart(item, stall.stall_id, e)}
+                            className="w-7 h-7 flex items-center justify-center text-emerald-700"
+                          >
+                            <Minus size={16} strokeWidth={2.5} />
                           </button>
-                        ) : (
-                          <div className="flex items-center gap-3 bg-foreground rounded-[1.75rem] px-4 py-2">
-                            <button onClick={(e) => removeFromCart(item, stall.stall_id, e)} className="text-background"><Minus size={18} strokeWidth={4} /></button>
-                            <span className="text-background font-black text-lg">{quantity}</span>
-                            <button onClick={(e) => addToCart(item, stall.stall_id, e)} className="text-background"><Plus size={18} strokeWidth={4} /></button>
-                          </div>
-                        )}
-                      </div>
+                          <span style={{ fontFamily: 'Geom' }} className="font-bold text-sm text-emerald-700 min-w-[16px] text-center">
+                            {qty}
+                          </span>
+                          <button
+                            onClick={(e) => addToCart(item, stall.stall_id, e)}
+                            className="w-7 h-7 flex items-center justify-center text-emerald-700"
+                          >
+                            <Plus size={16} strokeWidth={2.5} />
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </motion.div>
-                )
+                  </div>
+                );
               })}
             </div>
-          </section>
+          </div>
         ))}
       </div>
 
-      {cartItemCount > 0 && (
-        <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-6">
-          <button onClick={handleCheckout} disabled={isCheckingOut} className="w-full bg-foreground text-background px-10 py-5 rounded-[2.5rem] font-black text-lg flex items-center justify-center gap-4 shadow-2xl hover:scale-105 active:scale-95 transition-all">
-            <ShoppingCart size={24} strokeWidth={3} />
-            <span>{cartItemCount} Items • ₹{cartTotal}</span>
-            {isCheckingOut ? <Loader2 size={20} className="animate-spin" /> : <span>Checkout</span>}
-          </button>
-        </motion.div>
-      )}
-    </div>
-  )
-}
+      {/* Floating Cart Button */}
+      <AnimatePresence>
+        {cartItemCount > 0 && (
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            className="fixed bottom-20 left-6 right-6 z-50"
+          >
+            <button
+              onClick={() => setShowCart(true)}
+              className="w-full bg-emerald-600 text-white p-4 rounded-2xl flex items-center justify-between shadow-xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                  <ShoppingBag size={20} strokeWidth={2.5} />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-medium opacity-90">View Cart</p>
+                  <p style={{ fontFamily: 'Geom' }} className="text-sm font-bold">
+                    {cartItemCount} items • ₹{cartTotal}
+                  </p>
+                </div>
+              </div>
+              <span style={{ fontFamily: 'Geom' }} className="font-bold">Checkout</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-export default UserHome
+      {/* Cart Modal */}
+      <AnimatePresence>
+        {showCart && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCart(false)}
+              className="fixed inset-0 bg-black/50 z-50"
+            />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] flex flex-col"
+            >
+              {/* Cart Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <h3 style={{ fontFamily: 'Geom' }} className="text-xl font-bold">Your Cart</h3>
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Cart Items */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                {Array.from(cart.values()).map(({ item, stallId, quantity }) => (
+                  <div key={`${stallId}-${item.item_id}`} className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                    <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
+                      {item.image_url || '🍽️'}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm">{item.name}</h4>
+                      <p className="text-xs text-gray-500">₹{item.price} × {quantity}</p>
+                    </div>
+                    <p style={{ fontFamily: 'Geom' }} className="font-bold">₹{item.price * quantity}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Checkout Button */}
+              <div className="p-6 border-t border-gray-100">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-gray-600">Total</span>
+                  <span style={{ fontFamily: 'Geom' }} className="text-2xl font-bold">₹{cartTotal}</span>
+                </div>
+                <button
+                  onClick={handleCheckout}
+                  disabled={isCheckingOut}
+                  className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isCheckingOut ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Pay Now'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default UserHome;

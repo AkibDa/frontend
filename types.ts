@@ -40,10 +40,16 @@ export interface FoodDeal {
   tags: string[];
 }
 
+export interface OrderItem {
+  item_id: string;
+  name:string;
+  price: number;
+  quantity: number;
+}
+
 export interface Order {
   id: string;
-  dealId: string;
-  foodName: string;
+  items:OrderItem[];
   cafeteriaName: string;
   status: 'Reserved' | 'Claimed' | 'Ready' | 'Completed';
   timestamp: number;

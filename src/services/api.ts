@@ -63,7 +63,6 @@ export const getUserMenu = async () => {
   const response = await api.get('/user/menu');
   return response.data;
 }
-
 // Create payment order
 export const createPaymentOrder = async (
   stallId: string,
@@ -74,5 +73,14 @@ export const createPaymentOrder = async (
     stall_id: stallId,
     items: items
   });
+  return response.data;
+};
+export const verifyOrder = async (orderData: {
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
+  internal_order_id: string;
+}) => {
+  const response = await api.post('/user/order/verify', orderData);
   return response.data;
 };
