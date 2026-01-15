@@ -1,8 +1,8 @@
-# 🌱 GreenPlate Frontend
+# 🌱 GreenPlate
 
 **Sustainable Food Waste Reduction Platform**
 
-A React-based web application that connects students and staff with surplus cafeteria food, reducing waste and promoting sustainability.
+A React-based mobile application that connects students and staff with surplus cafeteria food, reducing waste and promoting sustainability.
 
 ## ✨ Features
 
@@ -24,16 +24,8 @@ npm install
 # Start development server
 npm run dev
 
-# Open browser to http://localhost:3000
+# App will open automatically at http://localhost:5000
 ```
-
-**For detailed setup instructions, see [QUICKSTART.md](./QUICKSTART.md)**
-
-## 📚 Documentation
-
-- **[QUICKSTART.md](./QUICKSTART.md)** - Get started in 3 minutes
-- **[INSTALLATION.md](./INSTALLATION.md)** - Complete installation guide
-- **[DEPENDENCIES.md](./DEPENDENCIES.md)** - All dependencies explained
 
 ## 🛠️ Tech Stack
 
@@ -43,29 +35,33 @@ npm run dev
 - **Tailwind CSS** - Utility-first styling
 - **Framer Motion** - Smooth animations
 - **Lucide React** - Beautiful icons
-- **Google Generative AI** - AI-powered features
+- **Google Generative AI** - AI-powered food analysis
+- **Firebase** - Authentication and database
+- **Axios** - HTTP client for API requests
 
 ## 📂 Project Structure
 
 ```
 frontend/
 ├── Pages/              # Page components
-│   ├── Auth.tsx        # Authentication
-│   ├── UserHome.tsx    # User dashboard
-│   ├── StaffDashboard.tsx
-│   └── ...
+│   ├── Auth.tsx        # User authentication & login
+│   ├── UserHome.tsx    # User dashboard & food deals
+│   ├── StaffDashboard.tsx # Staff interface
+│   ├── CreatePost.tsx  # Create new food deal post
+│   ├── DealDetails.tsx # View deal information
+│   ├── MyOrder.tsx     # User's reservations
+│   ├── IncomingReservations.tsx # Staff incoming orders
+│   ├── MapView.tsx     # Cafeteria location map
+│   ├── QueueManager.tsx # Queue management
+│   ├── Profile.tsx     # User profile
+│   ├── Onboarding.tsx  # App onboarding flow
+│   └── Splash.tsx      # Splash screen
 ├── Layouts/            # Layout wrappers
-│   ├── UserLayout.tsx
-│   └── StaffLayout.tsx
+│   ├── UserLayout.tsx  # User layout
+│   ├── StaffLayout.tsx # Staff layout
+│   └── StudentLayout.tsx # Student layout
 ├── context/            # React context (state)
-│   └── AppContext.tsx
-├── services/           # API services
-│   └── geminiService.ts
-├── App.tsx             # Main app component
-├── Index.tsx           # Entry point
-├── types.ts            # TypeScript types
-├── constants.tsx       # App constants
-└── styles.css          # Global styles
+│   └── AppContext.tsx  # Global app state
 ```
 
 ## 🎯 Available Scripts
@@ -85,6 +81,15 @@ Create a `.env` file in the root directory:
 ```env
 VITE_API_KEY=your_google_gemini_api_key
 VITE_API_URL=http://localhost:8000
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+VITE_FIREBASE_DATABASE_URL=your_firebase_database_url
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_firebase_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_firebase_measurement_id
+
 ```
 
 ## 🤝 Contributing
@@ -102,7 +107,6 @@ See [LICENSE](./LICENSE) file for details.
 ## 🆘 Support
 
 Having issues? Check:
-- [INSTALLATION.md](./INSTALLATION.md) troubleshooting section
 - [DEPENDENCIES.md](./DEPENDENCIES.md) for dependency info
 - Project issues on GitHub
 
