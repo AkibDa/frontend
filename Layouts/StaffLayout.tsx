@@ -21,29 +21,39 @@ const StaffLayout: React.FC = () => {
     }
   };
 
+  const navItems = [
+    { id: 'dashboard', label: 'Overview', icon: <LayoutDashboard size={22} strokeWidth={2} /> },
+    { id: 'queue', label: 'Kitchen', icon: <ChefHat size={22} strokeWidth={2} /> },
+    { id: 'pickup', label: 'Pickup', icon: <PackageCheck size={22} strokeWidth={2} /> },
+    { id: 'profile', label: 'Profile', icon: <User size={22} strokeWidth={2} /> },
+  ];
+
   return (
-    <div className="flex flex-col h-full overflow-hidden bg-transparent">
-      {/* Persistent Staff Header */}
-      <header className="px-6 py-5 flex items-center justify-between z-40 bg-white/60 backdrop-blur-xl sticky top-0 border-b border-white/50">
+    <div className="flex flex-col h-full overflow-hidden bg-gray-50/50">
+      
+      {/* 1. Minimalist Header */}
+      <header className="px-6 py-4 flex items-center justify-between z-40 bg-white/90 backdrop-blur-md sticky top-0 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-green-600 rounded-[1rem] flex items-center justify-center shadow-[0_10px_20px_rgba(76,175,80,0.35)]">
-            <Leaf size={22} className="text-white fill-current" />
+          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+            <Leaf size={16} className="text-white fill-current" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-black text-xl leading-none tracking-tighter text-gray-900">GreenPlate</span>
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.3em] leading-none mt-1">Staff Terminal</span>
+          <div className="flex flex-col justify-center">
+            <span style={{ fontFamily: 'Geom' }} className="text-lg font-bold text-gray-900 leading-none">
+              GreenPlate
+            </span>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar">
+      {/* 2. Content Area */}
+      <div className="flex-1 overflow-y-auto hide-scrollbar pb-24">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
             className="h-full"
           >
             {renderContent()}
@@ -57,55 +67,55 @@ const StaffLayout: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <button
+      {/* 3. Floating Action Button (Raised above navbar) */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setShowCreatePost(true)}
-        className="fixed bottom-32 right-8 w-16 h-16 bg-green-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-green-200 hover:bg-green-700 transition-all hover:scale-110 active:scale-90 z-40"
+        className="fixed bottom-24 right-6 w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center shadow-lg shadow-gray-300 z-40"
       >
-        <Plus size={36} />
-      </button>
+        <Plus size={26} strokeWidth={2.5} />
+      </motion.button>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/70 backdrop-blur-2xl border-t border-white/50 px-6 py-5 flex justify-between items-center z-50 rounded-t-[3rem] shadow-[0_-15px_50px_rgba(0,0,0,0.06)]">
-        <NavButton 
-          active={activeTab === 'dashboard'} 
-          onClick={() => setActiveTab('dashboard')} 
-          icon={<LayoutDashboard size={22} />} 
-          label="Stats" 
-        />
-        <NavButton 
-          active={activeTab === 'queue'} 
-          onClick={() => setActiveTab('queue')} 
-          icon={<ChefHat size={22} />} 
-          label="Kitchen" 
-        />
-        <NavButton 
-          active={activeTab === 'pickup'} 
-          onClick={() => setActiveTab('pickup')} 
-          icon={<PackageCheck size={22} />} 
-          label="Pickup" 
-        />
-        <NavButton 
-          active={activeTab === 'profile'} 
-          onClick={() => setActiveTab('profile')} 
-          icon={<User size={22} />} 
-          label="Profile" 
-        />
+      {/* 4. Minimalist Bottom "Box" Navbar */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-2 pb-5 z-50 flex justify-between items-center">
+        {navItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id as any)}
+              className="relative flex flex-col items-center justify-center w-16 h-14 group"
+            >
+              {/* Active Background Pill Animation */}
+              {isActive && (
+                <motion.div
+                  layoutId="navbar-indicator"
+                  className="absolute inset-0 bg-emerald-50 rounded-xl"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+
+              {/* Icon */}
+              <span className={`relative z-10 transition-colors duration-300 ${isActive ? 'text-emerald-700' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                {item.icon}
+              </span>
+
+              {/* Label (Optional: Remove this span if you want ONLY icons) */}
+              <span 
+                className={`relative z-10 text-[10px] font-bold mt-1 transition-all duration-300 ${
+                  isActive ? 'text-emerald-700 translate-y-0 opacity-100' : 'text-gray-400 translate-y-1 opacity-0'
+                }`}
+              >
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
       </nav>
+      
     </div>
   );
 };
-
-const NavButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ active, onClick, icon, label }) => (
-  <button 
-    onClick={onClick}
-    className={`flex flex-col items-center gap-1.5 transition-all duration-500 ${active ? 'text-green-600 scale-105' : 'text-gray-300 hover:text-gray-500'}`}
-  >
-    <div className={`p-2.5 rounded-2xl transition-all duration-500 ${active ? 'bg-green-50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]' : ''}`}>
-      {icon}
-    </div>
-    <span className={`text-[8px] font-black tracking-widest uppercase transition-all duration-500 ${active ? 'opacity-100' : 'opacity-0'}`}>
-      {label}
-    </span>
-  </button>
-);
 
 export default StaffLayout;
