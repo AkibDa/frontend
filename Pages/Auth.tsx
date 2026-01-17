@@ -58,59 +58,34 @@ const Auth: React.FC = () => {
         return;
       }
 
-      // =========================
-      // 🧑‍🍳 STAFF FLOW with Error Handling
-      // =========================
-      let staffVerified = false;
-      let staffActivated = false;
+      await api.post(
+        '/auth/verify-staff',
+        null,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      await api.post(
+        '/staff/activate',
+        null,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
 
-      try {
-        // Step 1: Verify staff existence
-        await api.post(
-          '/auth/verify-staff',
-          null,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        staffVerified = true;
+      // Fetch staff profile
+      const res = await api.get(
+        '/staff/me',
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
 
-        // Step 2: Activate staff account
-        await api.post(
-          '/staff/activate',
-          null,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        staffActivated = true;
+      const profile = res.data
 
-        // Step 3: Fetch staff profile
-        const res = await api.get(
-          '/staff/me',
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+      setStaffProfile({
+        role: profile.role,
+        stallId: profile.stall_id,
+        email: profile.email,
+      })
 
-        const profile = res.data;
-
-        // Step 4: Update app state only after all API calls succeed
-        setStaffProfile({
-          role: profile.role,
-          stallId: profile.stall_id,
-          email: profile.email,
-        });
-
-        setUserRole(UserRole.STAFF);
-        setVerified(true);
-        setOnboarded(true);
-      } catch (staffError: any) {
-        // Rollback: If activation or profile fetch failed after verification,
-        // we need to handle cleanup
-        if (staffVerified && !staffActivated) {
-          console.error('Staff verification succeeded but activation failed. Manual cleanup may be required.');
-          // Note: Ideally, the backend should handle this transactionally
-          // or provide a deactivate/rollback endpoint
-        }
-        
-        // Re-throw the error to be handled by the outer catch block
-        throw staffError;
-      }
+      setUserRole(UserRole.STAFF)
+      setVerified(true)
+      setOnboarded(true)
 
     } catch (err: any) {
       if (err?.code === 'auth/user-not-found') {
