@@ -3,11 +3,18 @@ import { UserRole, AppState, FoodDeal, Order, Cafeteria } from '../types';
 import { INITIAL_DEALS, INITIAL_CAFETERIAS } from '../constants';
 import { auth } from '@/firebaseConfig';
 
+type StaffProfile = {
+  role:"manager" | "staff";
+  stallId: string;
+  email: string;
+}
 
 interface AppContextType extends AppState {
   setUserRole: (role: UserRole | null) => void;
   setOnboarded: (val: boolean) => void;
   setVerified: (val: boolean) => void;
+  staffProfile: StaffProfile | null; //this is the new staff rbac
+  setStaffProfile: (p: StaffProfile | null) => void;
   addDeal: (deal: Omit<FoodDeal, 'id' | 'isClaimed'>) => void;
   toggleCafeteriaStatus: (id: string) => void;
   loadOrders: () => Promise<void>
@@ -20,6 +27,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [onboarded, setOnboarded] = useState(false);
   const [isVerified, setVerified] = useState(false);
+  const [staffProfile, setStaffProfile] = useState<StaffProfile | null>(null);
 
   const managedCafeteriaId = 'cafe-1';
 
@@ -59,26 +67,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   //   setOrders(prev => [newOrder, ...prev]);
   // };
   const loadOrders = async () => {
-    try{
-      const token = await auth.currentUser?.getIdToken();
-      if(!token)return;
+    if (userRole !== UserRole.USER) return; // 🔒 HARD STOP
+
+    try {
+      const token = await auth.currentUser?.getIdToken(true);
+      if (!token) return;
 
       const res = await fetch("http://localhost:8000/user/orders", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    
-    if(!res.ok){
-      throw new Error("Failed to fetch orders")
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch orders");
+      }
+
+      const data = await res.json();
+      
+      // 🔍 Debugging: Check what the backend is actually sending
+      console.log("API Response for Orders:", data);
+
+      // 🛡️ FIX: Handle different response structures safely
+      if (data && typeof data === "object" && "orders" in data && Array.isArray((data as any).orders)) {
+        setOrders((data as any).orders); // Case 1: Backend returns { orders: [...] }
+      } else if (Array.isArray(data)) {
+        setOrders(data);                 // Case 2: Backend returns [...] (Direct array)
+      } else {
+        console.warn("Unexpected orders format, defaulting to empty list");
+        setOrders([]);                   // Fallback to prevent crash
+      }
+
+    } catch (err) {
+      console.error("Failed to load orders", err);
+      setOrders([]); // Ensure app doesn't crash on error
     }
-    const orders: Order[] = await res.json();
-    setOrders(orders);
-    }
-    catch(err){
-      console.error("Failed to load orders",err);
-    }
-  }
+  };
 
   const addDeal = (dealData: Omit<FoodDeal, 'id' | 'isClaimed'>) => {
     const newDeal: FoodDeal = {
@@ -121,22 +145,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
+  // Reset application state on user logout
   const resetApp = () => {
     setUserRole(null);
+    setStaffProfile(null);
     setOnboarded(false);
     setVerified(false);
     setDeals(INITIAL_DEALS);
     setOrders([]);
   };
 
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged(user => {
-      if(user){
-        loadOrders()
-      }
-    })
-    return () => unsub();
-  },[])
+useEffect(() => {
+  const unsub = auth.onAuthStateChanged(async (user) => {
+    if (!user) return;
+
+    // Only students load orders
+    if (userRole === UserRole.USER) {
+      loadOrders();
+    }
+  });
+
+  return () => unsub();
+}, [userRole, loadOrders]);
+
+
 
   return (
     <AppContext.Provider
@@ -144,6 +176,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         userRole,
         onboarded,
         isVerified,
+
+        staffProfile,
+        setStaffProfile,
+
+
         managedCafeteriaId,
         cafeterias,
         deals,

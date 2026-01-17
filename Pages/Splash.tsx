@@ -1,75 +1,72 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Leaf, ChevronRight, Sparkles, TrendingDown, Zap } from 'lucide-react';
+// Make sure this path matches your folder name (assests vs assets)
+import logoPng from '../assests/GreenPlate.png'; 
 
 const Splash: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
   const [stage, setStage] = useState<'branding' | 'ecosystem'>('branding');
 
   useEffect(() => {
-    // Increased duration to allow for slower, more graceful animations
+    // 3 seconds total duration for splash
     const timer = setTimeout(() => setStage('ecosystem'), 3000);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden relative" style={{ perspective: '1200px' }}>
+    <div className="h-full flex flex-col bg-white overflow-hidden relative">
       <AnimatePresence mode="wait">
         {stage === 'branding' ? (
           <motion.div 
             key="branding"
-            initial={{ opacity: 0, scale: 0.05, z: -1000, rotateX: 20 }}
-            animate={{ opacity: 1, scale: 1, z: 0, rotateX: 0 }}
-            exit={{ opacity: 0, scale: 2.2, z: 500, rotateX: -10 }}
-            transition={{ 
-              duration: 2.2, // Slower entrance as requested
-              ease: [0.16, 1, 0.3, 1],
-              opacity: { duration: 1.2 } 
-            }}
+            // 1. Simple Fade In
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            // 2. Simple Fade Out when transitioning to app
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }} 
             className="flex-1 flex flex-col items-center justify-center z-10"
-            style={{ transformStyle: 'preserve-3d' }}
           >
-            {/* The Floating 3D Logo Component */}
+            {/* Logo Container */}
             <motion.div 
+              initial={{ opacity: 0, y: 20 }}
               animate={{ 
-                y: [0, -15, 0], // Slower floating vertical motion
-                rotateY: [-8, 8, -8], // Subtle 3D tilt
-                rotateX: [5, -5, 5] // Subtle 3D tilt
+                opacity: 1, 
+                y: 0,
               }}
-              transition={{ 
-                duration: 8, // Slower movement loop
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              }}
-              className="w-44 h-44 bg-green-600 rounded-[3.5rem] flex items-center justify-center mb-10 shadow-[0_40px_100px_rgba(22,163,74,0.35)] relative"
-              style={{ transformStyle: 'preserve-3d' }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="w-44 h-44 flex items-center justify-center mb-6 relative"
             >
-              <Leaf className="text-white fill-current" size={80} style={{ transform: 'translateZ(30px)' }} />
-              
-              {/* Outer Energy Ring */}
-              <motion.div 
-                animate={{ rotate: 360, scale: [1, 1.05, 1] }}
+              {/* Gentle Floating Animation (Optional - keep for polish) */}
+              <motion.img 
+                src={logoPng} 
+                alt="GreenPlate Logo" 
+                className="w-full h-full object-contain drop-shadow-2xl"
+                animate={{ y: [0, -10, 0] }}
                 transition={{ 
-                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+                  duration: 4, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
                 }}
-                className="absolute inset-[-22px] border-[2px] border-green-600/10 rounded-[4.5rem]"
               />
             </motion.div>
 
+            {/* App Name - Synced with Logo */}
             <motion.h1 
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.2, duration: 0.8 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              // Small delay (0.1) so it feels natural, but basically simultaneous
+              transition={{ delay: 0.1, duration: 0.8 }}
               className="text-5xl font-black text-gray-900 tracking-tighter"
             >
               GreenPlate
             </motion.h1>
             
+            {/* Loading Indicator */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
               className="flex items-center gap-3 mt-6 bg-green-50 px-4 py-1.5 rounded-full border border-green-100"
             >
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
@@ -81,9 +78,10 @@ const Splash: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
         ) : (
           <motion.div 
             key="ecosystem"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            // Simple fade in for the main app screen
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
             className="flex-1 flex flex-col p-10 pt-16 z-10 bg-[#FDFDFD]"
           >
             <header className="flex items-center justify-between mb-16">
