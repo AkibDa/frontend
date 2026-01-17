@@ -21,6 +21,13 @@ const AddStaffModal: React.FC<AddStaffModalProps> = ({ onClose }) => {
       return;
     }
 
+    // Validate email format using regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(null);
