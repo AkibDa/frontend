@@ -130,6 +130,7 @@ const ManageTeamModal: React.FC<ManageTeamModalProps> = ({ onClose }) => {
         <button
           onClick={onClose}
           className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-300 transition-colors"
+          aria-label="Close modal"
         >
           <X size={16} />
         </button>
