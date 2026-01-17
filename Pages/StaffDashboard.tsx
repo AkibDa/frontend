@@ -182,10 +182,18 @@ const StaffDashboard: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                  <button 
+                    onClick={() => window.alert("Edit menu item functionality will be available soon.")}
+                    aria-label="Edit menu item"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  >
                     <Edit2 size={16} />
                   </button>
-                  <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors">
+                  <button 
+                    onClick={() => window.alert("Delete menu item functionality will be available soon.")}
+                    aria-label="Delete menu item"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
