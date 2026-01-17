@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { UserRole, AppState, FoodDeal, Order, Cafeteria } from '../types';
 import { INITIAL_DEALS, INITIAL_CAFETERIAS } from '../constants';
 import { auth } from '@/firebaseConfig';
@@ -66,7 +66,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   //   setOrders(prev => [newOrder, ...prev]);
   // };
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     if (userRole !== UserRole.USER) return; // 🔒 HARD STOP
 
     try {
@@ -102,7 +102,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       console.error("Failed to load orders", err);
       setOrders([]); // Ensure app doesn't crash on error
     }
-  };
+  }, [userRole]);
 
   const addDeal = (dealData: Omit<FoodDeal, 'id' | 'isClaimed'>) => {
     const newDeal: FoodDeal = {
