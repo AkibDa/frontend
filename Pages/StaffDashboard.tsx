@@ -39,7 +39,13 @@ const StaffDashboard: React.FC = () => {
     fetchOrders()
   }, [])
 
-  if (!staffProfile) return null
+  if (!staffProfile) {
+    return (
+      <div className="flex items-center justify-center h-full bg-gray-50">
+        <p className="text-sm text-gray-500">Loading staff profile...</p>
+      </div>
+    )
+  }
 
   const myCafe = cafeterias.find((c) => c.id === managedCafeteriaId) || cafeterias[0]
   const myDeals = deals.filter((d) => d.cafeteriaId === myCafe.id && !d.isClaimed)
