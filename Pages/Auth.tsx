@@ -58,38 +58,39 @@ const Auth: React.FC = () => {
         return;
       }
 
-      // =========================
-      // 🧑‍🍳 STAFF / MANAGER FLOW
-      // =========================
-
-      // 2️⃣ Verify staff existence
       await api.post(
         '/auth/verify-staff',
         null,
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      )
+      await api.post(
+        '/staff/activate',
+        null,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
 
-      // 3️⃣ Fetch staff profile
-      const res = await api.get('/staff/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Fetch staff profile
+      const res = await api.get(
+        '/staff/me',
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
 
-      const profile = res.data;
+      const profile = res.data
 
-      // 4️⃣ NOW update app state (order matters)
       setStaffProfile({
-        role: profile.role,          // "manager" | "staff"
+        role: profile.role,
         stallId: profile.stall_id,
         email: profile.email,
-      });
+      })
 
-      setUserRole(UserRole.STAFF);
-      setVerified(true);
-      setOnboarded(true);
+      setUserRole(UserRole.STAFF)
+      setVerified(true)
+      setOnboarded(true)
+
     } catch (err: any) {
-      // 🔧 FIX 2: Proper Axios + Firebase error handling
       if (err?.response?.status === 401) {
-        setError('You are not authorized for this role.');
+        const msg = err?.response?.data?.message
+        setError(msg || 'You are not authorized for this role.');
       } else if (err?.code === 'auth/user-not-found') {
         setError('Account not found.');
       } else if (err?.code === 'auth/wrong-password') {
