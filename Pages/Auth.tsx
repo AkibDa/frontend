@@ -88,13 +88,13 @@ const Auth: React.FC = () => {
       setOnboarded(true)
 
     } catch (err: any) {
-      if (err?.response?.status === 401) {
-        const msg = err?.response?.data?.message
-        setError(msg || 'You are not authorized for this role.');
-      } else if (err?.code === 'auth/user-not-found') {
+      if (err?.code === 'auth/user-not-found') {
         setError('Account not found.');
       } else if (err?.code === 'auth/wrong-password') {
         setError('Incorrect password.');
+      } else if (err?.response?.status === 401) {
+        const msg = err?.response?.data?.message;
+        setError(msg || 'You are not authorized for this role.');
       } else {
         setError(err?.response?.data?.message || err.message || 'Authentication failed.');
       }
