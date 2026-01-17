@@ -92,7 +92,7 @@ const AddStaffModal: React.FC<AddStaffModalProps> = ({ onClose }) => {
           className="px-5 py-2.5 rounded-xl text-sm font-bold bg-black text-white flex items-center gap-2 hover:opacity-90 disabled:opacity-50 transition-all shadow-sm"
         >
           {loading ? (
-             "Adding..." 
+             "Adding…" 
           ) : (
             <>
                 <UserPlus size={16} />
