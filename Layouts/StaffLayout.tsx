@@ -73,6 +73,7 @@ const StaffLayout: React.FC = () => {
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowCreatePost(true)}
         className="fixed bottom-24 right-6 w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center shadow-lg shadow-gray-300 z-40"
+        aria-label="Create new post"
       >
         <Plus size={26} strokeWidth={2.5} />
       </motion.button>
