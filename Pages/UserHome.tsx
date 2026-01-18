@@ -5,12 +5,21 @@ import { auth } from '@/firebaseConfig';
 import { initiatePayment } from '@/services/paymentService';
 import { getUserMenu ,verifyOrder} from '@/services/api';
 
+const MENU_IMAGE_BASE_URL =
+  "https://raw.githubusercontent.com/AkibDa/backend/main/images_for_demo";
+
+const getMenuImage = (imageRef?: string) => {
+  if (!imageRef) return undefined;
+  return `${MENU_IMAGE_BASE_URL}/${imageRef}.jpg`;
+};
+
+
 interface MenuItem {
   item_id: string;
   name: string;
   price: number;
   description?: string;
-  image_url?: string;
+  image_ref?: string;
   category?: string;
   is_available: boolean;
 }
@@ -178,8 +187,16 @@ const UserHome: React.FC = () => {
                     className="bg-white rounded-2xl p-4 border border-gray-100 flex gap-4"
                   >
                     {/* Image */}
-                    <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-3xl flex-shrink-0">
-                      {item.image_url || '🍽️'}
+                    <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                      {item.image_ref ? (
+                        <img
+                          src={getMenuImage(item.image_ref)}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        "🍽️"
+                      )}
                     </div>
 
                     {/* Details */}
@@ -292,9 +309,18 @@ const UserHome: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
                 {Array.from(cart.values()).map(({ item, stallId, quantity }) => (
                   <div key={`${stallId}-${item.item_id}`} className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                    <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
-                      {item.image_url || '🍽️'}
+                    <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                      {item.image_ref ? (
+                        <img
+                          src={getMenuImage(item.image_ref)}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        "🍽️"
+                      )}
                     </div>
+
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm">{item.name}</h4>
                       <p className="text-xs text-gray-500">₹{item.price} × {quantity}</p>
