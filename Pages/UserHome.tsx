@@ -309,9 +309,18 @@ const UserHome: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
                 {Array.from(cart.values()).map(({ item, stallId, quantity }) => (
                   <div key={`${stallId}-${item.item_id}`} className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                    <div className="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
-                      {item.image_url || '🍽️'}
+                    <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                      {item.image_ref ? (
+                        <img
+                          src={getMenuImage(item.image_ref)}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        "🍽️"
+                      )}
                     </div>
+
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm">{item.name}</h4>
                       <p className="text-xs text-gray-500">₹{item.price} × {quantity}</p>
