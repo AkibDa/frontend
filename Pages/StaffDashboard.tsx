@@ -13,13 +13,22 @@ import api, { getStaffMenu, deleteMenuItem } from "@/services/api"
 import AddStaffModal from "@/components/AddStaffModal"
 import ManageTeamModal from "@/components/ManageTeamModal"
 
+const MENU_IMAGE_BASE_URL =
+  "https://raw.githubusercontent.com/AkibDa/backend/main/images_for_demo";
+
+const getMenuImage = (imageRef?: string) => {
+  if (!imageRef) return undefined;
+  return `${MENU_IMAGE_BASE_URL}/${imageRef}.jpg`;
+};
+
+
 interface BackendMenuItem {
   item_id: string;
   name: string;
   price: number;
   description: string;
   is_available: boolean;
-  image_url?: string; 
+  image_ref?: string; 
 }
 
 const StaffDashboard: React.FC = () => {
@@ -133,8 +142,17 @@ const StaffDashboard: React.FC = () => {
               {menuItems.map((item) => (
                 <div key={item.item_id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex gap-4 items-center">
                   <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
-                    {item.image_url ? <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" /> : "🍱"}
+                    {item.image_ref ? (
+                      <img
+                        src={getMenuImage(item.image_ref)}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      "🍱"
+                    )}
                   </div>
+
                   <div className="flex-1 min-w-0">
                     <h4 style={{ fontFamily: 'Geom' }} className="font-semibold text-gray-900 mb-0.5 truncate">{item.name}</h4>
                     <p className="text-xs text-gray-400 truncate mb-1">{item.description}</p>
