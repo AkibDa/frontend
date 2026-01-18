@@ -1,4 +1,3 @@
-// services/api.ts
 import axios from 'axios';
 import { auth } from '@/firebaseConfig';
 
@@ -10,57 +9,84 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Request Interceptor (Attaches Token)
 api.interceptors.request.use(async (config) => {
   try {
     const user = auth.currentUser;
     if (user) {
-      const token = await user.getIdToken();
+      // Get the existing token (false = cached, fast)
+      const token = await user.getIdToken(false);
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (error) {
-    console.error('Error getting auth token:', error);
+    console.error('Error attaching auth token:', error);
   }
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response, 
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Check if error is 401 (Unauthorized) AND we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      console.warn(`401 Unauthorized on ${originalRequest.url}. Retrying...`); // ✅ FIXED
+      
+      originalRequest._retry = true; // Mark as retried to prevent infinite loops
+      
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const newToken = await user.getIdToken(true);
+          
+          // Update the header with the new token
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          
+          // 🔁 Retry the original request with the new token
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
+      }
+    }
+    
+    // If it's not a 401 or retry failed, return the error as usual
+    return Promise.reject(error);
+  }
+);
+
 export default api;
 
-// --- EXISTING ENDPOINTS ---
 export const verifyStudent = async () => (await api.post('/auth/verify-student')).data;
 export const verifyStaff = async () => (await api.post('/auth/verify-staff')).data;
 export const getUserMenu = async () => (await api.get('/user/menu')).data;
+
 export const createPaymentOrder = async (stallId: string, items: any[]) => 
   (await api.post('/user/order/create', { stall_id: stallId, items })).data;
+
 export const verifyOrder = async (data: any) => (await api.post('/user/order/verify', data)).data;
 
-// --- NEW STAFF ENDPOINTS ---
-
-// 1. Get Staff Menu
+// --- STAFF ENDPOINTS ---  
 export const getStaffMenu = async () => {
   const response = await api.get('/staff/menu');
   return response.data;
 };
 
-// 2. Delete Menu Item
 export const deleteMenuItem = async (itemId: string) => {
-  const response = await api.delete(`/staff/menu/${itemId}`);
+  const response = await api.delete(`/staff/menu/${itemId}`); // ✅ FIXED
   return response.data;
 };
 
-// 3. Get Orders by Status (e.g., "PAID" or "READY")
 export const getStaffOrders = async (status: string) => {
-  const response = await api.get(`/staff/orders?status=${status}`);
+  const response = await api.get(`/staff/orders?status=${status}`); // ✅ FIXED
   return response.data; 
 };
 
-// 4. Update Order Status (e.g., PAID -> READY)
 export const updateOrderStatus = async (orderId: string, status: string) => {
-  const response = await api.patch(`/staff/orders/${orderId}/status`, { status });
+  const response = await api.patch(`/staff/orders/${orderId}/status`, { status }); // ✅ FIXED
   return response.data;
 };
 
-// 5. Verify Pickup Code (READY -> CLAIMED)
 export const verifyPickup = async (orderId: string, pickupCode: string) => {
   const response = await api.post('/staff/orders/verify-pickup', {
     order_id: orderId,
