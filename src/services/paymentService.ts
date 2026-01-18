@@ -37,7 +37,6 @@ export const initiatePayment = async (
       });
     }
 
-    // ⬇️ IMPORTANT: Return a Promise that resolves INSIDE handler
     return new Promise((resolve) => {
       const options = {
         key: orderData.key_id,
@@ -80,7 +79,7 @@ export const initiatePayment = async (
       rzp.open();
     });
   } catch (error: any) {
-    console.error('❌ Payment Error:', error);
+    console.error('Payment Error:', error);
 
     return {
       success: false,

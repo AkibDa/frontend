@@ -12,7 +12,7 @@ const UserLayout: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Clean Header */}
-      <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+      <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-white z-20">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">GP</span>
@@ -31,24 +31,31 @@ const UserLayout: React.FC = () => {
         </div>
       </header>
 
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.2 }}
-          className="h-full"
-        >
-          {activeTab === 'home' && <UserHome />}
-          {activeTab === 'map' && <MapView />}
-          {activeTab === 'orders' && <MyOrders />}
-          {activeTab === 'profile' && <Profile />}
-        </motion.div>
+      {/* Content Area - MEMORY FIX */}
+      {/* We keep all components mounted but hide them with CSS. 
+          This prevents the "Infinite Loop" and "Cache Reset" on tab switch. */}
+      <div className="flex-1 overflow-hidden relative bg-gray-50">
+        
+        <div className={`h-full w-full ${activeTab === 'home' ? 'block' : 'hidden'}`}>
+           <UserHome />
+        </div>
+
+        <div className={`h-full w-full ${activeTab === 'map' ? 'block' : 'hidden'}`}>
+           <MapView />
+        </div>
+
+        <div className={`h-full w-full ${activeTab === 'orders' ? 'block' : 'hidden'}`}>
+           <MyOrders />
+        </div>
+
+        <div className={`h-full w-full ${activeTab === 'profile' ? 'block' : 'hidden'}`}>
+           <Profile />
+        </div>
+
       </div>
 
-      {/* Modern Bottom Navigation */}
-      <nav className="border-t border-gray-100 bg-white px-6 py-2 safe-area-bottom">
+      {/* Bottom Navigation */}
+      <nav className="border-t border-gray-100 bg-white px-6 py-2 safe-area-bottom z-20">
         <div className="flex justify-around items-center max-w-md mx-auto">
           <NavButton
             icon={<Home size={22} strokeWidth={2.5} />}
@@ -90,12 +97,12 @@ const NavButton: React.FC<{
     onClick={onClick}
     className="flex flex-col items-center gap-1 py-2 px-4 relative"
   >
-    <div className={`transition-colors ${active ? 'text-emerald-600' : 'text-gray-400'}`}>
+    <div className={`transition-colors duration-200 ${active ? 'text-emerald-600' : 'text-gray-400'}`}>
       {icon}
     </div>
     <span
       style={{ fontFamily: 'Mona Sans' }}
-      className={`text-[10px] font-medium transition-colors ${
+      className={`text-[10px] font-medium transition-colors duration-200 ${
         active ? 'text-emerald-600' : 'text-gray-400'
       }`}
     >

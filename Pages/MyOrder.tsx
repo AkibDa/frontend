@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -6,8 +6,9 @@ import {
   CheckCircle2, Navigation, X, ChevronRight, UtensilsCrossed, Store 
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore'; 
-import { db } from '@/firebaseConfig'; // Ensure db is exported from your config
+import { db } from '@/firebaseConfig'; 
 
+// 🔒 College ID from your screenshot
 const COLLEGE_ID = "tMEBxMvwxTkfeYU5mXDW";
 
 const getOrderTotal = (items: any[]) => {
@@ -27,6 +28,9 @@ const MyOrders: React.FC = () => {
 
   // 🗂️ Local Cache for Stall Names [ID -> Name]
   const [stallNames, setStallNames] = useState<Record<string, string>>({});
+  
+  // 🛑 Prevent Infinite Loops: Track IDs we have already attempted to fetch
+  const fetchedIds = useRef<Set<string>>(new Set());
 
   // --- 1. AUTO-REFRESH ORDERS ---
   useEffect(() => {
@@ -37,44 +41,61 @@ const MyOrders: React.FC = () => {
   // --- 2. FETCH STALL NAMES (The "Frontend Join") ---
   useEffect(() => {
     const fetchMissingNames = async () => {
-      // 1. Find all unique IDs that we haven't fetched yet
       const uniqueIDs = new Set<string>();
+
+      // Collect IDs that need fetching
       orders.forEach(o => {
-        // The backend seems to put the ID in 'cafeteriaName' or 'stall_id'
+        // Prioritize stall_id, fallback to cafeteriaName
         const id = (o as any).stall_id || o.cafeteriaName; 
-        if (id && !stallNames[id] && id.length > 5) { // Simple check to ensure it looks like an ID
+        
+        // Check if: 
+        // 1. We have an ID
+        // 2. It's not in our name list
+        // 3. We haven't tried fetching it yet (fetchedIds.current)
+        if (id && !stallNames[id] && !fetchedIds.current.has(id) && id.length > 3) { 
            uniqueIDs.add(id);
         }
       });
 
       if (uniqueIDs.size === 0) return;
 
-      // 2. Fetch each name from Firestore
+      console.log("🔍 Fetching names for Stall IDs:", Array.from(uniqueIDs));
+
+      // Mark these as "attempted" immediately so we don't retry on next render
+      uniqueIDs.forEach(id => fetchedIds.current.add(id));
+
       const newNames: Record<string, string> = {};
       
       await Promise.all(Array.from(uniqueIDs).map(async (stallId) => {
         try {
           const docRef = doc(db, "colleges", COLLEGE_ID, "stalls", stallId);
           const snap = await getDoc(docRef);
+          
           if (snap.exists()) {
-            newNames[stallId] = snap.data().name || "Unknown Stall";
+            const data = snap.data();
+            console.log(`✅ Found Stall: ${stallId} -> ${data.name}`);
+            newNames[stallId] = data.name || "Unnamed Stall";
           } else {
-            newNames[stallId] = "Unknown Stall";
+            console.warn(`❌ Stall ID not found in DB: ${stallId}`);
+            newNames[stallId] = "Unknown Stall"; 
           }
         } catch (err) {
-          console.error(`Failed to fetch name for ${stallId}`, err);
-          newNames[stallId] = "Stall Error";
+          console.error(`⚠️ Error fetching stall ${stallId}:`, err);
+          // IMPORTANT: Set a placeholder so we don't try fetching 'undefined' again
+          newNames[stallId] = "Stall (Offline)"; 
         }
       }));
 
-      // 3. Update state
-      setStallNames(prev => ({ ...prev, ...newNames }));
+      // Update state with whatever we found (names or error messages)
+      if (Object.keys(newNames).length > 0) {
+        setStallNames(prev => ({ ...prev, ...newNames }));
+      }
     };
 
     if (orders.length > 0) {
       fetchMissingNames();
     }
-  }, [orders, stallNames]);
+  }, [orders, stallNames]); // Dependency array
 
 
   // --- 3. FILTERING LOGIC ---
@@ -86,18 +107,17 @@ const MyOrders: React.FC = () => {
 
   const selectedOrder = orders.find(o => o.id === selectedId);
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
     if (selectedId) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = 'unset';
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedId]);
 
-  // Helper to resolve the name for a specific order
+  // Helper to resolve the name
   const getStallName = (order: any) => {
     const id = order.stall_id || order.cafeteriaName;
-    if (stallNames[id]) return stallNames[id]; // Return fetched name
-    return "Loading..."; // Or return ID temporarily: return id;
+    if (stallNames[id]) return stallNames[id];
+    return "Loading..."; 
   };
 
   const renderStatusBadge = (status: string) => {
