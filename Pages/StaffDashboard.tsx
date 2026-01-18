@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react"
 import { useApp } from "../context/AppContext"
-import {  Package, Star, Power, Plus, 
+import { 
+  Package, Star, Power, Plus, 
   TrendingUp, Activity, Edit2, Trash2, X, Users
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -11,11 +12,10 @@ import api from "@/services/api"
 import AddStaffModal from "@/components/AddStaffModal"
 import ManageTeamModal from "@/components/ManageTeamModal"
 
-
 const StaffDashboard: React.FC = () => {
   const [backendOrders, setBackendOrders] = useState<any[]>([])
-  const [, setShowAddStaff] = useState(false)
-  const [showManageTeam, setShowManageTeam] = useState(false);
+  const [showAddStaff, setShowAddStaff] = useState(false)
+  const [showManageTeam, setShowManageTeam] = useState(false)
 
   const { deals, cafeterias, managedCafeteriaId, staffProfile, toggleCafeteriaStatus } = useApp()
 
@@ -108,7 +108,6 @@ const StaffDashboard: React.FC = () => {
         </div>
 
         {/* Manager Actions */}
-        {/* Manager Actions */}
         {staffProfile.role === "manager" && (
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -118,7 +117,7 @@ const StaffDashboard: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-2 gap-3">
-              {/* Existing Add Button */}
+              {/* Add Staff Button */}
               <button
                 onClick={() => setShowAddStaff(true)}
                 className="bg-black text-white py-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm"
@@ -129,7 +128,7 @@ const StaffDashboard: React.FC = () => {
                 <span className="font-semibold text-sm">Add Staff</span>
               </button>
 
-              {/* NEW: Manage Team Button */}
+              {/* Manage Team Button */}
               <button
                 onClick={() => setShowManageTeam(true)}
                 className="bg-white border border-gray-200 text-gray-900 py-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors shadow-sm"
@@ -179,21 +178,31 @@ const StaffDashboard: React.FC = () => {
                     <span className="text-xs text-gray-400 font-medium line-through">₹{deal.originalPrice}</span>
                   </div>
                 </div>
+
+                {/* --- FIX: Action Buttons are now INSIDE the map --- */}
+                <div className="flex flex-col gap-2 border-l border-gray-100 pl-4">
+                    <button
+                        type="button"
+                        onClick={() => window.alert(`Editing ${deal.name}`)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    >
+                        <Edit2 size={14} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => window.alert(`Deleting ${deal.name}`)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors"
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </div>
               </div>
             ))}
           </div>
-                   <button
-                     type="button"
-                     onClick={() => window.alert("Edit menu item functionality will be available soon.")}
-                     className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                   >
-                     <Edit2 size={16} />
-                   </button>
-                   <button
-                     type="button"
-                     onClick={() => window.alert("Delete menu item functionality will be available soon.")}
-                     className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors"
-                   >
+        </div>
+      </div>
+
+      {/* 3. Add Staff Modal Popup - KEPT SAFE OUTSIDE THE MAP */}
       <AnimatePresence>
         {showAddStaff && (
           <>
@@ -227,7 +236,6 @@ const StaffDashboard: React.FC = () => {
                   </button>
                 </div>
                 
-                {/* Your Existing Form Component Goes Here */}
                 <div className="p-6">
                   <AddStaffModal onClose={() => setShowAddStaff(false)} />
                 </div>
@@ -236,7 +244,8 @@ const StaffDashboard: React.FC = () => {
           </>
         )}
       </AnimatePresence>
-      {/* 4. Manage Team Modal Popup */}
+
+      {/* 4. Manage Team Modal Popup - KEPT SAFE OUTSIDE THE MAP */}
       <AnimatePresence>
         {showManageTeam && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -268,7 +277,7 @@ const StaffDashboard: React.FC = () => {
 }
 
 // Minimalist Stat Card Component
-const StatCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
+const StatCard: React.FC<{label: string; value: string; icon: React.ReactNode}> = ({ label, value, icon }) => (
   <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-28">
     <div className="flex justify-between items-start">
       <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</span>
