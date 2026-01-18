@@ -2,20 +2,21 @@
 
 import React, { useEffect, useState } from "react"
 import { useApp } from "../context/AppContext"
-import {  Package, Star, Power, Plus, 
-  TrendingUp, Activity, Edit2, Trash2, X, Users
+import {
+  Users, Package, Star, Power, Plus,
+  TrendingUp, Activity, Edit2, Trash2, X
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { auth } from "@/firebaseConfig"
 import api from "@/services/api"
 import AddStaffModal from "@/components/AddStaffModal"
-import ManageTeamModal from "@/components/ManageTeamModal"
-
+import ManageTeamModal from "@/components/ManageTeamModal" // 1. Import the new component
 
 const StaffDashboard: React.FC = () => {
   const [backendOrders, setBackendOrders] = useState<any[]>([])
-  const [, setShowAddStaff] = useState(false)
-  const [showManageTeam, setShowManageTeam] = useState(false);
+  const [loading, setLoading] = useState(true)
+  const [showAddStaff, setShowAddStaff] = useState(false)
+  const [showManageTeam, setShowManageTeam] = useState(false) // 2. Add state for new modal
 
   const { deals, cafeterias, managedCafeteriaId, staffProfile, toggleCafeteriaStatus } = useApp()
 
@@ -31,18 +32,14 @@ const StaffDashboard: React.FC = () => {
         setBackendOrders(res.data.orders || [])
       } catch (err) {
         console.error("Failed to fetch staff orders", err)
+      } finally {
+        setLoading(false)
       }
     }
     fetchOrders()
   }, [])
 
-  if (!staffProfile) {
-    return (
-      <div className="flex items-center justify-center h-full bg-gray-50">
-        <p className="text-sm text-gray-500">Loading staff profile...</p>
-      </div>
-    )
-  }
+  if (!staffProfile) return null
 
   const myCafe = cafeterias.find((c) => c.id === managedCafeteriaId) || cafeterias[0]
   const myDeals = deals.filter((d) => d.cafeteriaId === myCafe.id && !d.isClaimed)
@@ -71,8 +68,8 @@ const StaffDashboard: React.FC = () => {
         <button
           onClick={() => toggleCafeteriaStatus(myCafe.id)}
           className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-            myCafe.isOpen 
-              ? "bg-emerald-50 text-emerald-600 hover:bg-red-50 hover:text-red-600" 
+            myCafe.isOpen
+              ? "bg-emerald-50 text-emerald-600 hover:bg-red-50 hover:text-red-600"
               : "bg-gray-100 text-gray-400 hover:bg-emerald-600 hover:text-white"
           }`}
         >
@@ -85,60 +82,58 @@ const StaffDashboard: React.FC = () => {
         
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <StatCard 
-            label="Total Orders" 
-            value={completedCount.toString()} 
-            icon={<Activity size={18} className="text-blue-600" />} 
+          <StatCard
+            label="Total Orders"
+            value={completedCount.toString()}
+            icon={<Activity size={18} className="text-blue-600" />}
           />
-          <StatCard 
-            label="Active Menu" 
-            value={myDeals.length.toString()} 
-            icon={<Package size={18} className="text-emerald-600" />} 
+          <StatCard
+            label="Active Menu"
+            value={myDeals.length.toString()}
+            icon={<Package size={18} className="text-emerald-600" />}
           />
-          <StatCard 
-            label="Rating" 
-            value={myCafe.rating.toString()} 
-            icon={<Star size={18} className="text-orange-500" />} 
+          <StatCard
+            label="Rating"
+            value={myCafe.rating.toString()}
+            icon={<Star size={18} className="text-orange-500" />}
           />
-          <StatCard 
-            label="Revenue" 
-            value="Coming Soon" 
-            icon={<TrendingUp size={18} className="text-purple-600" />} 
+          <StatCard
+            label="Revenue"
+            value="₹--"
+            icon={<TrendingUp size={18} className="text-purple-600" />}
           />
         </div>
 
-        {/* Manager Actions */}
-        {/* Manager Actions */}
+        {/* Manager Actions (UPDATED) */}
         {staffProfile.role === "manager" && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 style={{ fontFamily: "Geom" }} className="text-lg font-bold text-gray-900">
+              <h3 style={{ fontFamily: 'Geom' }} className="text-lg font-bold text-gray-900">
                 Staff Management
               </h3>
             </div>
             
+            {/* 3. Updated Grid for Two Buttons */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Existing Add Button */}
-              <button
+                <button
                 onClick={() => setShowAddStaff(true)}
                 className="bg-black text-white py-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm"
-              >
+                >
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <Plus size={16} strokeWidth={3} />
+                    <Plus size={16} strokeWidth={3} />
                 </div>
                 <span className="font-semibold text-sm">Add Staff</span>
-              </button>
+                </button>
 
-              {/* NEW: Manage Team Button */}
-              <button
+                <button
                 onClick={() => setShowManageTeam(true)}
                 className="bg-white border border-gray-200 text-gray-900 py-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-gray-50 transition-colors shadow-sm"
-              >
+                >
                 <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-900">
-                  <Users size={16} strokeWidth={2} />
+                    <Users size={16} strokeWidth={2} />
                 </div>
                 <span className="font-semibold text-sm">View Team</span>
-              </button>
+                </button>
             </div>
           </div>
         )}
@@ -156,8 +151,8 @@ const StaffDashboard: React.FC = () => {
 
           <div className="space-y-3">
             {myDeals.map((deal) => (
-              <div 
-                key={deal.id} 
+              <div
+                key={deal.id}
                 className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex gap-4 items-center"
               >
                 {/* Image */}
@@ -179,25 +174,26 @@ const StaffDashboard: React.FC = () => {
                     <span className="text-xs text-gray-400 font-medium line-through">₹{deal.originalPrice}</span>
                   </div>
                 </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                   <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                     <Edit2 size={16} />
+                   </button>
+                   <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors">
+                     <Trash2 size={16} />
+                   </button>
+                </div>
               </div>
             ))}
           </div>
-                   <button
-                     type="button"
-                     onClick={() => window.alert("Edit menu item functionality will be available soon.")}
-                     className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                   >
-                     <Edit2 size={16} />
-                   </button>
-                   <button
-                     type="button"
-                     onClick={() => window.alert("Delete menu item functionality will be available soon.")}
-                     className="w-9 h-9 flex items-center justify-center rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors"
-                   >
+        </div>
+      </div>
+
+      {/* Add Staff Modal Popup (Existing) */}
       <AnimatePresence>
         {showAddStaff && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -205,8 +201,6 @@ const StaffDashboard: React.FC = () => {
               onClick={() => setShowAddStaff(false)}
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
             />
-            
-            {/* Modal Box */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -219,15 +213,13 @@ const StaffDashboard: React.FC = () => {
                   <h3 style={{ fontFamily: 'Geom' }} className="text-xl font-bold text-gray-900">
                     Add Team Member
                   </h3>
-                  <button 
+                  <button
                     onClick={() => setShowAddStaff(false)}
                     className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-300 transition-colors"
                   >
                     <X size={16} />
                   </button>
                 </div>
-                
-                {/* Your Existing Form Component Goes Here */}
                 <div className="p-6">
                   <AddStaffModal onClose={() => setShowAddStaff(false)} />
                 </div>
@@ -236,7 +228,8 @@ const StaffDashboard: React.FC = () => {
           </>
         )}
       </AnimatePresence>
-      {/* 4. Manage Team Modal Popup */}
+
+      {/* 4. NEW: Manage Team Modal Popup (Centered & Dynamic) */}
       <AnimatePresence>
         {showManageTeam && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -263,6 +256,7 @@ const StaffDashboard: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
     </div>
   )
 }

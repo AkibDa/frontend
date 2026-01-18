@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { UserRole, AppState, FoodDeal, Order, Cafeteria } from '../types';
 import { INITIAL_DEALS, INITIAL_CAFETERIAS } from '../constants';
 import { auth } from '@/firebaseConfig';
 
 type StaffProfile = {
-  role:"manager" | "staff";
+  role: "manager" | "staff";
   stallId: string;
   email: string;
 }
@@ -13,7 +13,7 @@ interface AppContextType extends AppState {
   setUserRole: (role: UserRole | null) => void;
   setOnboarded: (val: boolean) => void;
   setVerified: (val: boolean) => void;
-  staffProfile: StaffProfile | null; //this is the new staff rbac
+  staffProfile: StaffProfile | null;
   setStaffProfile: (p: StaffProfile | null) => void;
   addDeal: (deal: Omit<FoodDeal, 'id' | 'isClaimed'>) => void;
   toggleCafeteriaStatus: (id: string) => void;
@@ -35,42 +35,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [deals, setDeals] = useState<FoodDeal[]>(INITIAL_DEALS);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // const claimDeal = (dealId: string) => {
-  //   let claimedDeal: FoodDeal | undefined;
-
-  //   setDeals(prevDeals =>
-  //     prevDeals.map(d => {
-  //       if (d.id === dealId && d.quantity > 0) {
-  //         claimedDeal = { ...d };
-  //         return {
-  //           ...d,
-  //           isClaimed: true,
-  //           quantity: Math.max(0, d.quantity - 1),
-  //         };
-  //       }
-  //       return d;
-  //     })
-  //   );
-
-  //   if (!claimedDeal) return;
-
-  //   const newOrder: Order = {
-  //     id: Math.random().toString(36).substring(2, 11),
-  //     dealId: claimedDeal.id,
-  //     foodName: claimedDeal.name,
-  //     cafeteriaName: claimedDeal.cafeteriaName,
-  //     status: 'Reserved',
-  //     timestamp: Date.now(),
-  //     qrCode: 'GP-' + Math.floor(1000 + Math.random() * 9000),
-  //   };
-
-  //   setOrders(prev => [newOrder, ...prev]);
-  // };
-  const loadOrders = async () => {
-    if (userRole !== UserRole.USER) return; // 🔒 HARD STOP
+  // ✅ FIX 1: Wrap loadOrders in useCallback to prevent infinite loop
+  const loadOrders = useCallback(async () => {
+    if (userRole !== UserRole.USER) return;
 
     try {
-      const token = await auth.currentUser?.getIdToken(true);
+      // ✅ FIX 2: Removed 'true' (forceRefresh). Only refresh if expired.
+      const token = await auth.currentUser?.getIdToken(); 
       if (!token) return;
 
       const res = await fetch("http://localhost:8000/user/orders", {
@@ -85,24 +56,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       const data = await res.json();
       
-      // 🔍 Debugging: Check what the backend is actually sending
-      console.log("API Response for Orders:", data);
-
-      // 🛡️ FIX: Handle different response structures safely
       if (data && typeof data === "object" && "orders" in data && Array.isArray((data as any).orders)) {
-        setOrders((data as any).orders); // Case 1: Backend returns { orders: [...] }
+        setOrders((data as any).orders);
       } else if (Array.isArray(data)) {
-        setOrders(data);                 // Case 2: Backend returns [...] (Direct array)
+        setOrders(data);
       } else {
-        console.warn("Unexpected orders format, defaulting to empty list");
-        setOrders([]);                   // Fallback to prevent crash
+        setOrders([]);
       }
 
     } catch (err) {
       console.error("Failed to load orders", err);
-      setOrders([]); // Ensure app doesn't crash on error
+      // setOrders([]); // Optional: clear orders on error
     }
-  };
+  }, [userRole]); // Dependency: Only recreate if userRole changes
 
   const addDeal = (dealData: Omit<FoodDeal, 'id' | 'isClaimed'>) => {
     const newDeal: FoodDeal = {
@@ -113,30 +79,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setDeals(prev => [newDeal, ...prev]);
   };
 
-  // const acceptOrder = (orderId: string) => {
-  //   setOrders(prev =>
-  //     prev.map(o =>
-  //       o.id === orderId ? { ...o, status: 'Claimed' } : o
-  //     )
-  //   );
-  // };
-
-  // const markAsReady = (orderId: string) => {
-  //   setOrders(prev =>
-  //     prev.map(o =>
-  //       o.id === orderId ? { ...o, status: 'Ready' } : o
-  //     )
-  //   );
-  // };
-
-  // const markAsPickedUp = (orderId: string) => {
-  //   setOrders(prev =>
-  //     prev.map(o =>
-  //       o.id === orderId ? { ...o, status: 'Completed' } : o
-  //     )
-  //   );
-  // };
-
   const toggleCafeteriaStatus = (id: string) => {
     setCafeterias(prev =>
       prev.map(c =>
@@ -145,7 +87,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
-  // Reset application state on user logout
   const resetApp = () => {
     setUserRole(null);
     setStaffProfile(null);
@@ -155,22 +96,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setOrders([]);
   };
 
-useEffect(() => {
-  const unsub = auth.onAuthStateChanged(async (user) => {
-    if (!user) return;
-
-    await user.getIdToken(true);
-
-    // Only students load orders
+  // ✅ FIX 3: Simplified useEffect. 
+  // We don't need onAuthStateChanged here if we just want to load data when role exists.
+  useEffect(() => {
     if (userRole === UserRole.USER) {
       loadOrders();
     }
-  });
+  }, [userRole, loadOrders]);
 
-  return () => unsub();
-}, [userRole, loadOrders]);
-
-
+  // Keep a separate listener for Auth state persistence if needed, 
+  // but don't mix it with data loading loops.
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((user) => {
+      if (!user) {
+        // Handle logout cleanup if necessary
+      }
+    });
+    return () => unsub();
+  }, []);
 
   return (
     <AppContext.Provider
@@ -178,11 +121,8 @@ useEffect(() => {
         userRole,
         onboarded,
         isVerified,
-
         staffProfile,
         setStaffProfile,
-
-
         managedCafeteriaId,
         cafeterias,
         deals,
@@ -191,11 +131,7 @@ useEffect(() => {
         setUserRole,
         setOnboarded,
         setVerified,
-        // claimDeal,
         addDeal,
-        // acceptOrder,
-        // markAsReady,
-        // markAsPickedUp,
         toggleCafeteriaStatus,
         resetApp,
       }}
@@ -212,4 +148,3 @@ export const useApp = () => {
   }
   return context;
 };
-
