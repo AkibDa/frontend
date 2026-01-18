@@ -6,81 +6,91 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout:10000,
+  timeout: 10000,
 });
 
-// Add interceptor to include Firebase auth token and auto attach
-api.interceptors.request.use(
-  async (config) => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken();
-        config.headers.Authorization = `Bearer ${token}`;
-        console.log('🔐 Auth token added to request');
-        // console.log('Token preview:', token.substring(0, 20) + '...');
-        
-      }
-       else {
-        console.warn('⚠️ No authenticated user found - request sent without token');
-      }
-    } catch (error) {
-      console.error('Error getting auth token:', error);
+api.interceptors.request.use(async (config) => {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      // Get the existing token (false = cached, fast)
+      const token = await user.getIdToken(false);
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+  } catch (error) {
+    console.error('Error attaching auth token:', error);
   }
-);
+  return config;
+});
 
-//response interceptor //handles common errors
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.error('❌ 401 Unauthorized - Token invalid or expired');
-      // Optional: Redirect to login
-      // window.location.href = '/login';
+  (response) => response, 
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Check if error is 401 (Unauthorized) AND we haven't retried yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      console.warn(`401 Unauthorized on ${originalRequest.url}. Retrying...`); // ✅ FIXED
+      
+      originalRequest._retry = true; // Mark as retried to prevent infinite loops
+      
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          const newToken = await user.getIdToken(true);
+          
+          // Update the header with the new token
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          
+          // 🔁 Retry the original request with the new token
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
+      }
     }
+    
+    // If it's not a 401 or retry failed, return the error as usual
     return Promise.reject(error);
   }
 );
 
 export default api;
 
-export const verifyStudent = async () => {
-  const response = await api.post('/auth/verify-student');
-  return response.data;
-};
-export const verifyStaff = async () => {
-  const response = await api.post('/auth/verify-staff');
+export const verifyStudent = async () => (await api.post('/auth/verify-student')).data;
+export const verifyStaff = async () => (await api.post('/auth/verify-staff')).data;
+export const getUserMenu = async () => (await api.get('/user/menu')).data;
+
+export const createPaymentOrder = async (stallId: string, items: any[]) => 
+  (await api.post('/user/order/create', { stall_id: stallId, items })).data;
+
+export const verifyOrder = async (data: any) => (await api.post('/user/order/verify', data)).data;
+
+// --- STAFF ENDPOINTS ---  
+export const getStaffMenu = async () => {
+  const response = await api.get('/staff/menu');
   return response.data;
 };
 
-//Menu
-export const getUserMenu = async () => {
-  const response = await api.get('/user/menu');
-  return response.data;
-}
-// Create payment order
-export const createPaymentOrder = async (
-  stallId: string,
-  items: Array<{ item_id: string; quantity: number }>
-) => {
-  console.log('📤 Sending order request:', { stallId, itemCount: items.length });
-  const response = await api.post('/user/order/create', {
-    stall_id: stallId,
-    items: items
-  });
+export const deleteMenuItem = async (itemId: string) => {
+  const response = await api.delete(`/staff/menu/${itemId}`); // ✅ FIXED
   return response.data;
 };
-export const verifyOrder = async (orderData: {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-  internal_order_id: string;
-}) => {
-  const response = await api.post('/user/order/verify', orderData);
+
+export const getStaffOrders = async (status: string) => {
+  const response = await api.get(`/staff/orders?status=${status}`); // ✅ FIXED
+  return response.data; 
+};
+
+export const updateOrderStatus = async (orderId: string, status: string) => {
+  const response = await api.patch(`/staff/orders/${orderId}/status`, { status }); // ✅ FIXED
+  return response.data;
+};
+
+export const verifyPickup = async (orderId: string, pickupCode: string) => {
+  const response = await api.post('/staff/orders/verify-pickup', {
+    order_id: orderId,
+    pickup_code: pickupCode
+  });
   return response.data;
 };

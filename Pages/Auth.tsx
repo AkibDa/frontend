@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, Lock, LogIn, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { UserRole } from '../types';
 import { useApp } from '../context/AppContext';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword
 } from 'firebase/auth';
-import api from '@/services/api';
 import { auth } from '@/firebaseConfig';
 
 const Auth: React.FC = () => {
@@ -31,26 +30,38 @@ const Auth: React.FC = () => {
     setLoading(true);
 
     try {
-      // 1️⃣ Firebase auth
+      // 1️⃣ Firebase Auth (Login or SignUp)
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
 
-      // 🔧 FIX 1: force-refresh token
-      const token = await auth.currentUser?.getIdToken(true);
-      if (!token) throw new Error('Failed to obtain auth token');
+      // 2️⃣ Force Token Refresh to ensure we have the latest claims
+      const user = auth.currentUser;
+      if (!user) throw new Error('Authentication failed. No user found.');
+      
+      const token = await user.getIdToken(true);
 
       // =========================
       // 👨‍🎓 STUDENT FLOW
       // =========================
       if (role === UserRole.USER) {
-        await api.post(
-          '/auth/verify-student',
-          null,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        // 🔒 Use native fetch to avoid Axios interceptor conflicts
+        const res = await fetch('http://localhost:8000/auth/verify-student', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}) // Send empty object, not null
+        });
+
+        if (!res.ok) {
+           // Try to parse error message from backend
+           const errData = await res.json().catch(() => ({}));
+           throw new Error(errData.message || `Verification failed: ${res.status}`);
+        }
 
         setUserRole(UserRole.USER);
         setVerified(true);
@@ -58,45 +69,60 @@ const Auth: React.FC = () => {
         return;
       }
 
-      await api.post(
-        '/auth/verify-staff',
-        null,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      await api.post(
-        '/staff/activate',
-        null,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      // =========================
+      // 👔 STAFF FLOW
+      // =========================
+      
+      // 1. Verify Staff
+      const verifyRes = await fetch('http://localhost:8000/auth/verify-staff', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      if (!verifyRes.ok) throw new Error("Staff verification failed");
 
-      // Fetch staff profile
-      const res = await api.get(
-        '/staff/me',
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      // 2. Activate Staff
+      const activateRes = await fetch('http://localhost:8000/staff/activate', {
+         method: 'POST',
+         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+         body: JSON.stringify({})
+      });
+      if (!activateRes.ok) throw new Error("Staff activation failed");
 
-      const profile = res.data
+      // 3. Get Profile
+      const profileRes = await fetch('http://localhost:8000/staff/me', {
+         headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!profileRes.ok) throw new Error("Failed to load staff profile");
+      
+      const profile = await profileRes.json();
 
       setStaffProfile({
         role: profile.role,
         stallId: profile.stall_id,
+        stallName: profile.stall_name,
         email: profile.email,
-      })
+      });
 
-      setUserRole(UserRole.STAFF)
-      setVerified(true)
-      setOnboarded(true)
+      setUserRole(UserRole.STAFF);
+      setVerified(true);
+      setOnboarded(true);
 
     } catch (err: any) {
-      if (err?.code === 'auth/user-not-found') {
-        setError('Account not found.');
+      console.error("Auth Error:", err);
+
+      // Detailed Error Handling
+      if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
+        setError('Account not found. Please Sign Up first.');
       } else if (err?.code === 'auth/wrong-password') {
         setError('Incorrect password.');
-      } else if (err?.response?.status === 401) {
-        const msg = err?.response?.data?.message;
-        setError(msg || 'You are not authorized for this role.');
+      } else if (err?.code === 'auth/email-already-in-use') {
+        setError('Email already in use. Please Sign In.');
+      } else if (err.message.includes('401')) {
+        setError('Access Denied. You may need to use a college email.');
       } else {
-        setError(err?.response?.data?.message || err.message || 'Authentication failed.');
+        setError(err.message || 'Authentication failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -127,7 +153,7 @@ const Auth: React.FC = () => {
         <div className="bg-gray-100/80 p-1 rounded-xl flex mb-8">
           <button
             onClick={() => setRole(UserRole.USER)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium ${
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
               role === UserRole.USER
                 ? 'bg-white shadow-sm text-green-600'
                 : 'text-gray-500'
@@ -137,7 +163,7 @@ const Auth: React.FC = () => {
           </button>
           <button
             onClick={() => setRole(UserRole.STAFF)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium ${
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
               role === UserRole.STAFF
                 ? 'bg-white shadow-sm text-green-600'
                 : 'text-gray-500'
@@ -148,7 +174,7 @@ const Auth: React.FC = () => {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-xs font-medium text-center">
+          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-xs font-medium text-center border border-red-100">
             {error}
           </div>
         )}
@@ -162,7 +188,7 @@ const Auth: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
-              className="w-full py-4 pl-12 pr-4 rounded-xl border"
+              className="w-full py-4 pl-12 pr-4 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
             />
           </div>
 
@@ -173,12 +199,12 @@ const Auth: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full py-4 pl-12 pr-12 rounded-xl border"
+              className="w-full py-4 pl-12 pr-12 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -188,10 +214,26 @@ const Auth: React.FC = () => {
         <button
           onClick={handleAuth}
           disabled={loading}
-          className="w-full bg-black text-white py-4 rounded-xl"
+          className="w-full bg-black text-white py-4 rounded-xl font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Processing…' : isSignUp ? 'Continue' : 'Sign In'}
+          {loading ? 'Processing...' : isSignUp ? 'Continue' : 'Sign In'}
         </button>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-500">
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+            <button 
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+              }}
+              className="text-green-600 font-medium hover:underline"
+            >
+              {isSignUp ? "Sign In" : "Sign Up"}
+            </button>
+          </p>
+        </div>
+
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
+
 import { UserRole, AppState, FoodDeal, Order, Cafeteria } from '../types';
 import { INITIAL_DEALS, INITIAL_CAFETERIAS } from '../constants';
 import { auth } from '@/firebaseConfig';
@@ -6,6 +8,7 @@ import { auth } from '@/firebaseConfig';
 type StaffProfile = {
   role: "manager" | "staff";
   stallId: string;
+  stallName: string;
   email: string;
 }
 
@@ -17,7 +20,7 @@ interface AppContextType extends AppState {
   setStaffProfile: (p: StaffProfile | null) => void;
   addDeal: (deal: Omit<FoodDeal, 'id' | 'isClaimed'>) => void;
   toggleCafeteriaStatus: (id: string) => void;
-  loadOrders: () => Promise<void>
+  loadOrders: () => Promise<void>;
   resetApp: () => void;
 }
 
@@ -35,27 +38,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [deals, setDeals] = useState<FoodDeal[]>(INITIAL_DEALS);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // ✅ FIX 1: Wrap loadOrders in useCallback to prevent infinite loop
+  // ------------------------------------------------------------------
+  // 🛠️ HELPER: Standardized Authenticated Fetch
+  // This handles the Token logic, 401 errors, and Retries automatically.
+  // ------------------------------------------------------------------
+  const apiFetch = useCallback(async (endpoint: string) => {
+    if (!auth.currentUser) throw new Error("No user logged in");
+
+    // 1. Get cached token (fast)
+    let token = await auth.currentUser.getIdToken();
+    
+    let res = await fetch(`http://localhost:8000${endpoint}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // 2. If 401 Unauthorized, force refresh token and retry ONCE
+    if (res.status === 401) {
+      console.warn(`401 on ${endpoint} - Refreshing token and retrying...`);
+      token = await auth.currentUser.getIdToken(true); // Force Refresh
+      
+      res = await fetch(`http://localhost:8000${endpoint}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
+
+    if (!res.ok) throw new Error(`Request to ${endpoint} failed with ${res.status}`);
+    
+    return res.json();
+  }, []);
+
+  // ------------------------------------------------------------------
+  // 🔄 Load Orders using the Helper
+  // ------------------------------------------------------------------
   const loadOrders = useCallback(async () => {
-    if (userRole !== UserRole.USER) return;
+    if (userRole !== UserRole.USER || !auth.currentUser) return;
 
     try {
-      // ✅ FIX 2: Removed 'true' (forceRefresh). Only refresh if expired.
-      const token = await auth.currentUser?.getIdToken(); 
-      if (!token) return;
+      const data = await apiFetch("/user/orders");
 
-      const res = await fetch("http://localhost:8000/user/orders", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch orders");
-      }
-
-      const data = await res.json();
-      
+      // Handle different response formats safely
       if (data && typeof data === "object" && "orders" in data && Array.isArray((data as any).orders)) {
         setOrders((data as any).orders);
       } else if (Array.isArray(data)) {
@@ -63,12 +84,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       } else {
         setOrders([]);
       }
-
     } catch (err) {
-      console.error("Failed to load orders", err);
-      // setOrders([]); // Optional: clear orders on error
+      console.error("Failed to load orders:", err);
     }
-  }, [userRole]); // Dependency: Only recreate if userRole changes
+  }, [userRole, apiFetch]);
+
 
   const addDeal = (dealData: Omit<FoodDeal, 'id' | 'isClaimed'>) => {
     const newDeal: FoodDeal = {
@@ -96,24 +116,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setOrders([]);
   };
 
-  // ✅ FIX 3: Simplified useEffect. 
-  // We don't need onAuthStateChanged here if we just want to load data when role exists.
-  useEffect(() => {
-    if (userRole === UserRole.USER) {
-      loadOrders();
-    }
-  }, [userRole, loadOrders]);
 
-  // Keep a separate listener for Auth state persistence if needed, 
-  // but don't mix it with data loading loops.
+  // ------------------------------------------------------------------
+  // 🔄 useEffect: Listens for Auth Changes
+  // ------------------------------------------------------------------
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        // Handle logout cleanup if necessary
+      if (user) {
+        if (userRole === UserRole.USER) {
+          loadOrders();
+        }
+      } else {
+        setOrders([]); // Clear data on logout
       }
     });
+
     return () => unsub();
-  }, []);
+  }, [userRole, loadOrders]);
+
 
   return (
     <AppContext.Provider
