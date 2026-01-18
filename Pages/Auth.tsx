@@ -80,6 +80,7 @@ const Auth: React.FC = () => {
       setStaffProfile({
         role: profile.role,
         stallId: profile.stall_id,
+        stallName: profile.stall_name,
         email: profile.email,
       })
 

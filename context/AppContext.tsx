@@ -6,6 +6,7 @@ import { auth } from '@/firebaseConfig';
 type StaffProfile = {
   role:"manager" | "staff";
   stallId: string;
+  stallName: string;
   email: string;
 }
 
