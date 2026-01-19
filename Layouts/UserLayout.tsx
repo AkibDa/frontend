@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Home, Receipt, User as UserIcon, Store } from 'lucide-react';
 import UserHome from '../Pages/UserHome';
-import MapView from '../Pages/MapView';
 import MyOrders from '../Pages/MyOrder';
 import Profile from '../Pages/Profile';
 import { motion } from 'framer-motion';
 
+
 const UserLayout: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'map' | 'orders' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'profile'>('home');
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -31,17 +31,10 @@ const UserLayout: React.FC = () => {
         </div>
       </header>
 
-      {/* Content Area - MEMORY FIX */}
-      {/* We keep all components mounted but hide them with CSS. 
-          This prevents the "Infinite Loop" and "Cache Reset" on tab switch. */}
       <div className="flex-1 overflow-hidden relative bg-gray-50">
         
         <div className={`h-full w-full ${activeTab === 'home' ? 'block' : 'hidden'}`}>
            <UserHome />
-        </div>
-
-        <div className={`h-full w-full ${activeTab === 'map' ? 'block' : 'hidden'}`}>
-           <MapView />
         </div>
 
         <div className={`h-full w-full ${activeTab === 'orders' ? 'block' : 'hidden'}`}>
@@ -63,12 +56,12 @@ const UserLayout: React.FC = () => {
             active={activeTab === 'home'}
             onClick={() => setActiveTab('home')}
           />
-          <NavButton
+          {/* <NavButton
             icon={<Store size={22} strokeWidth={2.5} />}
             label="Map"
             active={activeTab === 'map'}
             onClick={() => setActiveTab('map')}
-          />
+          /> */}
           <NavButton
             icon={<Receipt size={22} strokeWidth={2.5} />}
             label="Orders"
