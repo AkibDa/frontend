@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Minus, Loader2, ShoppingBag, X } from 'lucide-react';
+import { Search, Plus, Minus, Loader2, ShoppingBag, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { auth } from '@/firebaseConfig';
 import { initiatePayment } from '@/services/paymentService';
-import { getUserMenu ,verifyOrder} from '@/services/api';
+import { getUserMenu, verifyOrder } from '@/services/api';
 
 const MENU_IMAGE_BASE_URL =
   "https://raw.githubusercontent.com/AkibDa/backend/main/images_for_demo";
@@ -12,7 +12,6 @@ const getMenuImage = (imageRef?: string) => {
   if (!imageRef) return undefined;
   return `${MENU_IMAGE_BASE_URL}/${imageRef}.jpg`;
 };
-
 
 interface MenuItem {
   item_id: string;
@@ -37,6 +36,7 @@ const UserHome: React.FC = () => {
   const [stalls, setStalls] = useState<Stall[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCart, setShowCart] = useState(false);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -53,8 +53,35 @@ const UserHome: React.FC = () => {
     fetchMenu();
   }, []);
 
+  useEffect(() => {
+    if (errorToast) {
+      const timer = setTimeout(() => setErrorToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorToast]);
+
+  // 🔍 SEARCH LOGIC
+  const filteredStalls = stalls.map(stall => {
+    if (!searchQuery.trim()) return stall;
+
+    const matchingItems = stall.menu_items.filter(item => 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    return { ...stall, menu_items: matchingItems };
+  }).filter(stall => stall.menu_items.length > 0);
+
   const addToCart = (item: MenuItem, stallId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
+
+    const currentStallIds = Array.from(new Set(Array.from(cart.values()).map(i => i.stallId)));
+    
+    if (currentStallIds.length > 0 && currentStallIds[0] !== stallId) {
+      setErrorToast("You can only order from one stall at a time. Clear cart to switch.");
+      return; 
+    }
+
     const cartKey = `${stallId}-${item.item_id}`;
     const newCart = new Map(cart);
     const existing = newCart.get(cartKey);
@@ -85,7 +112,7 @@ const UserHome: React.FC = () => {
   const handleCheckout = async () => {
     if (cart.size === 0) return;
     setIsCheckingOut(true);
-    
+
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -93,29 +120,21 @@ const UserHome: React.FC = () => {
         return;
       }
 
-      // 1. Prepare Data
-      const firstItem = Array.from(cart.values())[0];
-      const cartItems = Array.from(cart.values()).map((item) => ({
+      const cartValues = Array.from(cart.values());
+      const stallId = cartValues[0].stallId;
+
+      const cartItems = cartValues.map((item) => ({
         item_id: item.item.item_id,
         quantity: item.quantity,
       }));
 
-      // 2. Trigger Razorpay Checkout
       const result = await initiatePayment(
         cartItems, 
-        firstItem.stallId, 
+        stallId, 
         user.email || '', 
         user.displayName || ''
       );
-
-      console.log("🔥 VERIFY PAYLOAD", {
-      razorpay_payment_id: result.paymentId,
-      razorpay_order_id: result.orderId,
-      razorpay_signature: result.signature,
-      internal_order_id: result.internalOrderId,
-    });
-
-      // 3. verify payment on backend
+      
       if (result.success) {
         await verifyOrder({
           razorpay_payment_id: result.paymentId!,
@@ -148,104 +167,139 @@ const UserHome: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 relative" style={{ fontFamily: 'Geom' }}>
+      
       {/* Search Header */}
       <div className="px-6 pt-6 pb-4 bg-white">
-        <h1 style={{ fontFamily: 'Geom' }} className="text-2xl font-bold text-gray-900 mb-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">
           Menu
         </h1>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search dishes..."
-            className="w-full bg-gray-50 border border-gray-200 py-2.5 pl-10 pr-4 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className="w-full bg-gray-50 border border-gray-200 py-2.5 pl-10 pr-10 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
           />
+          
+          {/* ❌ CLEAR BUTTON: Only shows when text exists */}
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Menu List */}
       <div className="flex-1 overflow-y-auto pb-32">
-        {stalls.map((stall) => (
-          <div key={stall.stall_id} className="mb-8">
-            <div className="px-6 mb-3">
-              <h2 style={{ fontFamily: 'Geom' }} className="text-lg font-bold text-gray-900">
-                {stall.stall_name}
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">{stall.menu_items.length} items available</p>
-            </div>
+        {filteredStalls.length === 0 ? (
+           <div className="text-center py-20 text-gray-400">
+             <p>No dishes found for "{searchQuery}"</p>
+           </div>
+        ) : (
+          filteredStalls.map((stall) => (
+            <div key={stall.stall_id} className="mb-8">
+              <div className="px-6 mb-3">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {stall.stall_name}
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">{stall.menu_items.length} items available</p>
+              </div>
 
-            <div className="space-y-3 px-6">
-              {stall.menu_items.map((item) => {
-                const cartKey = `${stall.stall_id}-${item.item_id}`;
-                const qty = cart.get(cartKey)?.quantity || 0;
-                return (
-                  <div
-                    key={item.item_id}
-                    className="bg-white rounded-2xl p-4 border border-gray-100 flex gap-4"
-                  >
-                    {/* Image */}
-                    <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
-                      {item.image_ref ? (
-                        <img
-                          src={getMenuImage(item.image_ref)}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        "🍽️"
-                      )}
-                    </div>
+              <div className="space-y-3 px-6">
+                {stall.menu_items.map((item) => {
+                  const cartKey = `${stall.stall_id}-${item.item_id}`;
+                  const qty = cart.get(cartKey)?.quantity || 0;
+                  return (
+                    <div
+                      key={item.item_id}
+                      className="bg-white rounded-2xl p-4 border border-gray-100 flex gap-4"
+                    >
+                      <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                        {item.image_ref ? (
+                          <img
+                            src={getMenuImage(item.image_ref)}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          "🍽️"
+                        )}
+                      </div>
 
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <h4 style={{ fontFamily: 'Geom' }} className="font-semibold text-gray-900 text-sm mb-0.5">
-                        {item.name}
-                      </h4>
-                      <p className="text-xs text-gray-500 line-clamp-1 mb-2">{item.description}</p>
-                      <p style={{ fontFamily: 'Geom' }} className="text-base font-bold text-gray-900">
-                        ₹{item.price}
-                      </p>
-                    </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm mb-0.5">
+                          {item.name}
+                        </h4>
+                        <p className="text-xs text-gray-500 line-clamp-1 mb-2">{item.description}</p>
+                        <p className="text-base font-bold text-gray-900">
+                          ₹{item.price}
+                        </p>
+                      </div>
 
-                    {/* Add/Remove Buttons */}
-                    <div className="flex items-center">
-                      {qty === 0 ? (
-                        <button
-                          onClick={(e) => addToCart(item, stall.stall_id, e)}
-                          className="w-9 h-9 bg-emerald-600 text-white rounded-lg flex items-center justify-center hover:bg-emerald-700 transition-colors"
-                        >
-                          <Plus size={18} strokeWidth={2.5} />
-                        </button>
-                      ) : (
-                        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1">
-                          <button
-                            onClick={(e) => removeFromCart(item, stall.stall_id, e)}
-                            className="w-7 h-7 flex items-center justify-center text-emerald-700"
-                          >
-                            <Minus size={16} strokeWidth={2.5} />
-                          </button>
-                          <span style={{ fontFamily: 'Geom' }} className="font-bold text-sm text-emerald-700 min-w-[16px] text-center">
-                            {qty}
-                          </span>
+                      <div className="flex items-center">
+                        {qty === 0 ? (
                           <button
                             onClick={(e) => addToCart(item, stall.stall_id, e)}
-                            className="w-7 h-7 flex items-center justify-center text-emerald-700"
+                            className="w-9 h-9 bg-emerald-600 text-white rounded-lg flex items-center justify-center hover:bg-emerald-700 transition-colors"
                           >
-                            <Plus size={16} strokeWidth={2.5} />
+                            <Plus size={18} strokeWidth={2.5} />
                           </button>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1">
+                            <button
+                              onClick={(e) => removeFromCart(item, stall.stall_id, e)}
+                              className="w-7 h-7 flex items-center justify-center text-emerald-700"
+                            >
+                              <Minus size={16} strokeWidth={2.5} />
+                            </button>
+                            <span className="font-bold text-sm text-emerald-700 min-w-[16px] text-center">
+                              {qty}
+                            </span>
+                            <button
+                              onClick={(e) => addToCart(item, stall.stall_id, e)}
+                              className="w-7 h-7 flex items-center justify-center text-emerald-700"
+                            >
+                              <Plus size={16} strokeWidth={2.5} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
+
+      {/* 🚨 ERROR TOAST */}
+      <AnimatePresence>
+        {errorToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-24 left-6 right-6 z-[60] flex justify-center"
+          >
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl shadow-lg border border-red-100 flex items-center gap-3 max-w-sm">
+              <AlertCircle size={20} className="flex-shrink-0" />
+              <p className="text-xs font-semibold">{errorToast}</p>
+              <button onClick={() => setErrorToast(null)} className="ml-auto text-red-400 hover:text-red-600">
+                <X size={16} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Floating Cart Button */}
       <AnimatePresence>
@@ -266,12 +320,12 @@ const UserHome: React.FC = () => {
                 </div>
                 <div className="text-left">
                   <p className="text-xs font-medium opacity-90">View Cart</p>
-                  <p style={{ fontFamily: 'Geom' }} className="text-sm font-bold">
+                  <p className="text-sm font-bold">
                     {cartItemCount} items • ₹{cartTotal}
                   </p>
                 </div>
               </div>
-              <span style={{ fontFamily: 'Geom' }} className="font-bold">Checkout</span>
+              <span className="font-bold">Checkout</span>
             </button>
           </motion.div>
         )}
@@ -294,9 +348,8 @@ const UserHome: React.FC = () => {
               exit={{ y: '100%' }}
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[80vh] flex flex-col"
             >
-              {/* Cart Header */}
               <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                <h3 style={{ fontFamily: 'Geom' }} className="text-xl font-bold">Your Cart</h3>
+                <h3 className="text-xl font-bold">Your Cart</h3>
                 <button
                   onClick={() => setShowCart(false)}
                   className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center"
@@ -305,7 +358,6 @@ const UserHome: React.FC = () => {
                 </button>
               </div>
 
-              {/* Cart Items */}
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
                 {Array.from(cart.values()).map(({ item, stallId, quantity }) => (
                   <div key={`${stallId}-${item.item_id}`} className="flex items-center gap-3 pb-3 border-b border-gray-100">
@@ -320,21 +372,19 @@ const UserHome: React.FC = () => {
                         "🍽️"
                       )}
                     </div>
-
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm">{item.name}</h4>
                       <p className="text-xs text-gray-500">₹{item.price} × {quantity}</p>
                     </div>
-                    <p style={{ fontFamily: 'Geom' }} className="font-bold">₹{item.price * quantity}</p>
+                    <p className="font-bold">₹{item.price * quantity}</p>
                   </div>
                 ))}
               </div>
 
-              {/* Checkout Button */}
               <div className="p-6 border-t border-gray-100">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-gray-600">Total</span>
-                  <span style={{ fontFamily: 'Geom' }} className="text-2xl font-bold">₹{cartTotal}</span>
+                  <span className="text-2xl font-bold">₹{cartTotal}</span>
                 </div>
                 <button
                   onClick={handleCheckout}
@@ -353,7 +403,7 @@ const UserHome: React.FC = () => {
               </div>
             </motion.div>
           </>
-        )}
+        )} 
       </AnimatePresence>
     </div>
   );

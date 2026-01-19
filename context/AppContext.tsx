@@ -38,21 +38,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [deals, setDeals] = useState<FoodDeal[]>(INITIAL_DEALS);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // ------------------------------------------------------------------
-  // 🛠️ HELPER: Standardized Authenticated Fetch
-  // This handles the Token logic, 401 errors, and Retries automatically.
-  // ------------------------------------------------------------------
   const apiFetch = useCallback(async (endpoint: string) => {
     if (!auth.currentUser) throw new Error("No user logged in");
 
-    // 1. Get cached token (fast)
     let token = await auth.currentUser.getIdToken();
     
     let res = await fetch(`http://localhost:8000${endpoint}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    // 2. If 401 Unauthorized, force refresh token and retry ONCE
     if (res.status === 401) {
       console.warn(`401 on ${endpoint} - Refreshing token and retrying...`);
       token = await auth.currentUser.getIdToken(true); // Force Refresh
@@ -67,9 +61,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return res.json();
   }, []);
 
-  // ------------------------------------------------------------------
-  // 🔄 Load Orders using the Helper
-  // ------------------------------------------------------------------
   const loadOrders = useCallback(async () => {
     if (userRole !== UserRole.USER || !auth.currentUser) return;
 

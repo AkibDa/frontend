@@ -51,7 +51,7 @@ export interface Order {
   id: string;
   items:OrderItem[];
   cafeteriaName: string;
-  status: 'Reserved' | 'Claimed' | 'Ready' | 'Completed';
+  status: 'Reserved' | 'Claimed' | 'Ready' | 'Completed' | 'Cancelled';
   timestamp: number;
   qrCode: string;
 }

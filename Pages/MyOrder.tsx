@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   QrCode, MapPin, ShoppingBag, BellRing, ChefHat, 
-  CheckCircle2, Navigation, X, ChevronRight, UtensilsCrossed, Store 
+  CheckCircle2, X, ChevronRight, UtensilsCrossed, Store 
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore'; 
-import { db } from '@/firebaseConfig'; // Ensure db is exported from your config
+import { db } from '@/firebaseConfig'; 
 
+// 🔒 College ID from your screenshot
 const COLLEGE_ID = "tMEBxMvwxTkfeYU5mXDW";
 
 const getOrderTotal = (items: any[]) => {
@@ -27,6 +28,7 @@ const MyOrders: React.FC = () => {
 
   // 🗂️ Local Cache for Stall Names [ID -> Name]
   const [stallNames, setStallNames] = useState<Record<string, string>>({});
+  const fetchedIds = useRef<Set<string>>(new Set());
 
   // --- 1. AUTO-REFRESH ORDERS ---
   useEffect(() => {
@@ -34,70 +36,70 @@ const MyOrders: React.FC = () => {
     return () => clearInterval(interval);
   }, [loadOrders]);
 
-  // --- 2. FETCH STALL NAMES (The "Frontend Join") ---
+  // --- 2. FETCH STALL NAMES ---
   useEffect(() => {
     const fetchMissingNames = async () => {
-      // 1. Find all unique IDs that we haven't fetched yet
       const uniqueIDs = new Set<string>();
+
       orders.forEach(o => {
-        // The backend seems to put the ID in 'cafeteriaName' or 'stall_id'
         const id = (o as any).stall_id || o.cafeteriaName; 
-        if (id && !stallNames[id] && id.length > 5) { // Simple check to ensure it looks like an ID
+        if (id && !stallNames[id] && !fetchedIds.current.has(id) && id.length > 3) { 
            uniqueIDs.add(id);
         }
       });
 
       if (uniqueIDs.size === 0) return;
 
-      // 2. Fetch each name from Firestore
+      uniqueIDs.forEach(id => fetchedIds.current.add(id));
+
       const newNames: Record<string, string> = {};
       
       await Promise.all(Array.from(uniqueIDs).map(async (stallId) => {
         try {
           const docRef = doc(db, "colleges", COLLEGE_ID, "stalls", stallId);
           const snap = await getDoc(docRef);
+          
           if (snap.exists()) {
-            newNames[stallId] = snap.data().name || "Unknown Stall";
+            newNames[stallId] = snap.data().name || "Unnamed Stall";
           } else {
-            newNames[stallId] = "Unknown Stall";
+            newNames[stallId] = "Unknown Stall"; 
           }
         } catch (err) {
-          console.error(`Failed to fetch name for ${stallId}`, err);
-          newNames[stallId] = "Stall Error";
+          console.error(`Error fetching stall ${stallId}:`, err);
+          newNames[stallId] = "Stall (Offline)"; 
         }
       }));
 
-      // 3. Update state
-      setStallNames(prev => ({ ...prev, ...newNames }));
+      if (Object.keys(newNames).length > 0) {
+        setStallNames(prev => ({ ...prev, ...newNames }));
+      }
     };
 
     if (orders.length > 0) {
       fetchMissingNames();
     }
-  }, [orders, stallNames]);
+  }, [orders, stallNames]); 
 
 
   // --- 3. FILTERING LOGIC ---
   const filteredOrders = orders.filter(o => {
-    const isPast = ['Claimed', 'Completed', 'Cancelled'].includes(o.status);
+    const isPast = ['Claimed', 'Completed', 'Cancelled'].includes(o.status as string);
     if (activeTab === 'Active') return !isPast;
     return isPast;
   });
 
   const selectedOrder = orders.find(o => o.id === selectedId);
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
     if (selectedId) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = 'unset';
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedId]);
 
-  // Helper to resolve the name for a specific order
   const getStallName = (order: any) => {
     const id = order.stall_id || order.cafeteriaName;
-    if (stallNames[id]) return stallNames[id]; // Return fetched name
-    return "Loading..."; // Or return ID temporarily: return id;
+    if (stallNames[id]) return stallNames[id];
+    return "Loading..."; 
   };
 
   const renderStatusBadge = (status: string) => {
@@ -133,7 +135,13 @@ const MyOrders: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 relative" style={{ fontFamily: 'Geom' }}>
+    // Added motion.div wrapper for smooth page entry
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      className="flex flex-col h-full bg-gray-50 relative" 
+      style={{ fontFamily: 'Geom' }}
+    >
       
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-white z-10 relative">
@@ -154,7 +162,8 @@ const MyOrders: React.FC = () => {
 
       {/* Orders List */}
       <div className="flex-1 overflow-y-auto pb-24 px-6 pt-4">
-        <AnimatePresence mode="popLayout">
+        {/* Removed mode="popLayout" to fix alignment jumping */}
+        <AnimatePresence>
           {filteredOrders.length === 0 ? (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex flex-col items-center justify-center h-64 text-center mt-12">
               <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
@@ -198,14 +207,14 @@ const MyOrders: React.FC = () => {
                     </div>
 
                     <div className="space-y-1 mb-2">
-                       {order.items?.slice(0, 2).map((item: any, idx: number) => (
-                         <div key={idx} className="text-xs text-gray-500 flex justify-between">
-                           <span>{item.quantity}x {item.name}</span>
-                         </div>
-                       ))}
-                       {(order.items?.length || 0) > 2 && (
-                         <div className="text-xs text-gray-400 font-medium">+ {(order.items?.length || 0) - 2} more items...</div>
-                       )}
+                        {order.items?.slice(0, 2).map((item: any, idx: number) => (
+                          <div key={idx} className="text-xs text-gray-500 flex justify-between">
+                            <span>{item.quantity}x {item.name}</span>
+                          </div>
+                        ))}
+                        {(order.items?.length || 0) > 2 && (
+                          <div className="text-xs text-gray-400 font-medium">+ {(order.items?.length || 0) - 2} more items...</div>
+                        )}
                     </div>
                     <div className="pt-3 border-t border-gray-50 flex items-center justify-between text-xs font-medium text-emerald-600">
                       <span>View Details & QR</span>
@@ -230,7 +239,7 @@ const MyOrders: React.FC = () => {
                 <X size={18} />
               </motion.button>
 
-              <div className="overflow-y-auto p-6 scrollbar-hide">
+              <div className="overflow-y-auto p-6 scrollbar-hide flex flex-col h-full">
                 <div className="mb-6">
                   <div className="flex items-start justify-between mb-2 pr-10">
                     <div>
@@ -260,10 +269,10 @@ const MyOrders: React.FC = () => {
                       </div>
                     )}
                     {['Claimed', 'Completed'].includes(selectedOrder.status) && (
-                       <div className="p-3 bg-gray-100 rounded-xl border border-gray-200 flex items-center gap-2">
-                         <CheckCircle2 size={16} className="text-gray-500 flex-shrink-0" />
-                         <p className="text-xs font-medium text-gray-600">This order has been picked up.</p>
-                       </div>
+                        <div className="p-3 bg-gray-100 rounded-xl border border-gray-200 flex items-center gap-2">
+                          <CheckCircle2 size={16} className="text-gray-500 flex-shrink-0" />
+                          <p className="text-xs font-medium text-gray-600">This order has been picked up.</p>
+                        </div>
                     )}
                   </motion.div>
                 </div>
@@ -282,7 +291,7 @@ const MyOrders: React.FC = () => {
                 )}
 
                 {/* Item List */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mb-4">
                   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Order Items</h4>
                   <div className="space-y-3 mb-6">
                     {selectedOrder.items?.map((item: any, idx: number) => (
@@ -304,21 +313,52 @@ const MyOrders: React.FC = () => {
                   </div>
                 </motion.div>
 
-                {/* Actions */}
-                {!['Claimed', 'Completed'].includes(selectedOrder.status) && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="flex flex-col gap-3">
-                    <button className={`w-full py-4 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 ${selectedOrder.status === 'Ready' ? 'bg-emerald-600 text-white' : 'bg-gray-900 text-white'}`}>
-                      <Navigation size={18} />
-                      {selectedOrder.status === 'Ready' ? 'Navigate to Pickup' : 'Get Directions'}
-                    </button>
-                  </motion.div>
-                )}
+                {/* Actions / Status Indicator */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={{ delay: 0.4 }} 
+                  className="mt-auto pt-2"
+                >
+                  {/* CASE 1: READY FOR PICKUP */}
+                  {selectedOrder.status === 'Ready' && (
+                    <div className="w-full py-4 rounded-xl text-sm font-bold bg-emerald-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-200">
+                      <BellRing size={20} className="animate-pulse" />
+                      <span>Order Ready for Pickup</span>
+                    </div>
+                  )}
+
+                  {/* CASE 2: PREPARING */}
+                  {['Reserved', 'Payment Pending', 'Paid'].includes(selectedOrder.status) && (
+                    <div className="w-full py-4 rounded-xl text-sm font-bold bg-blue-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                      <ChefHat size={20} />
+                      <span>Kitchen is Preparing</span>
+                    </div>
+                  )}
+
+                  {/* CASE 3: COMPLETED */}
+                  {['Claimed', 'Completed'].includes(selectedOrder.status) && (
+                    <div className="w-full py-4 rounded-xl text-sm font-bold bg-gray-100 text-gray-500 border border-gray-200 flex items-center justify-center gap-2">
+                      <CheckCircle2 size={20} />
+                      <span>Order Completed</span>
+                    </div>
+                  )}
+
+                  {/* CASE 4: CANCELLED */}
+                  {(selectedOrder.status as string) === 'Cancelled' && (
+                    <div className="w-full py-4 rounded-xl text-sm font-bold bg-red-50 text-red-500 border border-red-100 flex items-center justify-center gap-2">
+                      <X size={20} />
+                      <span>Order Cancelled</span>
+                    </div>
+                  )}
+                </motion.div>
+
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 
