@@ -1,9 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { X, Camera, Loader2, Trash2, Save, Plus } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Camera, Loader2, Trash2, Save, Plus, CheckCircle, AlertTriangle } from 'lucide-react'; // Added icons
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '@/services/api';
-
 
 interface ScannedItem {
   name: string;
@@ -11,18 +10,31 @@ interface ScannedItem {
   description: string;
 }
 
+// Simple Notification Type
+interface NotificationState {
+  message: string;
+  type: 'success' | 'error';
+}
+
 const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { managedCafeteriaId, cafeterias } = useApp();
+  const { staffProfile } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   
-  // State for the list of items
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [showReview, setShowReview] = useState(false);
-  
-  const myCafe = cafeterias.find(c => c.id === managedCafeteriaId) || cafeterias[0];
+
+  // 1. New State for Custom Notification
+  const [notification, setNotification] = useState<NotificationState | null>(null);
+
+  // Helper to show notification
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    // Auto-hide after 3 seconds
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,12 +61,13 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           description: i.description || ''
         })));
         setShowReview(true);
+        showNotification("Items scanned successfully!", 'success');
       } else {
-        alert("No items detected. Please try again.");
+        showNotification("No items detected. Please try again.", 'error');
       }
     } catch (error: any) {
       console.error("Scan failed:", error);
-      alert("Failed to read menu. Please try manually adding items.");
+      showNotification("Failed to read menu. Try manual entry.", 'error');
       setItems([]);
       setShowReview(true);
     } finally {
@@ -73,7 +86,6 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setItems(newItems);
   };
 
-  // FIX: Add new item to the START of the list so it is visible immediately
   const handleAddItem = () => {
     setItems([{ name: '', price: '', description: '' }, ...items]);
   };
@@ -83,13 +95,11 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setIsUploading(true);
 
     try {
-      // 1. Fetch Correct Stall ID
       const meResponse = await api.get('/staff/me');
       const correctStallId = meResponse.data.stall_id;
 
       if (!correctStallId) throw new Error("Could not verify staff identity.");
 
-      // 2. Upload
       await api.post('/staff/menu', {
         stall_id: correctStallId,
         items: items.map(item => ({
@@ -100,23 +110,28 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         }))
       });
 
-      alert("✅ Menu uploaded successfully!");
+      // 2. Show Success Notification instead of alert
+      showNotification("Menu uploaded successfully!", 'success');
       
-      // FIX: Clear the state immediately after success
       setItems([]);
       setShowReview(false);
-      
-      onClose();
+
+      // 3. Close the modal after a short delay so user sees the message
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+
     } catch (error: any) {
       console.error("Upload failed:", error);
       const msg = error.response?.data?.message || "Failed to save menu.";
-      alert(msg);
+      showNotification(msg, 'error');
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
+    <div style={{ fontFamily: 'Geom' }}>
     <motion.div
       initial={{ y: '100%' }}
       animate={{ y: 0 }}
@@ -124,6 +139,38 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       className="fixed inset-0 z-[60] bg-white flex flex-col max-w-md mx-auto overflow-hidden"
     >
+      
+      {/* 4. Notification Toast UI */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className={`absolute top-6 left-4 right-4 z-[70] p-4 rounded-2xl shadow-xl flex items-center gap-3 ${
+              notification.type === 'success' 
+                ? 'bg-emerald-600 text-white' 
+                : 'bg-red-500 text-white'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <CheckCircle className="flex-shrink-0" size={24} />
+            ) : (
+              <AlertTriangle className="flex-shrink-0" size={24} />
+            )}
+            <div>
+              <h4 className="font-bold text-sm">
+                {notification.type === 'success' ? 'Success' : 'Error'}
+              </h4>
+              <p className="text-xs opacity-90 font-medium">
+                {notification.message}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="p-6 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 transition-colors">
@@ -131,13 +178,14 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </button>
         <div className="flex flex-col items-center">
             <h2 className="text-xl font-black text-gray-900 tracking-tight">Upload Menu</h2>
-            <span className="text-[8px] font-black text-green-600 uppercase tracking-widest">{myCafe.name} Hub</span>
+            <span className="text-[8px] font-black text-green-600 uppercase tracking-widest">
+              {staffProfile?.stallName || "GreenPlate Stall"} Hub
+            </span>
         </div>
         <div className="w-10"></div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar pb-32">
-        
         {/* Scanner */}
         {!showReview && (
           <div 
@@ -149,7 +197,7 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <Camera size={36} strokeWidth={2.5} />
               </div>
               <h3 className="text-lg font-black text-gray-900">Scan Menu Card</h3>
-              <p className="text-xs text-gray-400 font-medium max-w-[200px]">
+              <p  className="text-xs text-gray-400 font-medium max-w-[200px]">
                 Take a clear photo of your printed menu. AI will extract all items instantly.
               </p>
             </div>
@@ -206,7 +254,7 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         />
                       </div>
                       <div className="flex flex-col items-end justify-between gap-2">
-                         <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-2 py-1">
+                          <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-2 py-1">
                             <span className="text-xs font-bold text-gray-400">₹</span>
                             <input 
                               type="number"
@@ -215,14 +263,14 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                               placeholder="0"
                               className="w-12 text-right font-black text-gray-900 bg-transparent focus:outline-none"
                             />
-                         </div>
-                         <button 
+                          </div>
+                          <button 
                             type="button"
                             onClick={() => handleDeleteItem(idx)}
                             className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                         >
+                          >
                             <Trash2 size={16} />
-                         </button>
+                          </button>
                       </div>
                     </div>
                   </motion.div>
@@ -264,6 +312,7 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </div>
       )}
     </motion.div>
+    </div>
   );
 };
 

@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
-import { Home, Receipt, User as UserIcon, Store } from 'lucide-react';
+import { Home, Receipt, User as UserIcon } from 'lucide-react'; 
 import UserHome from '../Pages/UserHome';
 import MyOrders from '../Pages/MyOrder';
 import Profile from '../Pages/Profile';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion'; 
 import GreenPlateLogo from '../assests/GreenPlate.png'; 
+
+// 1. Import Auth to get the current user
+import { auth } from '@/firebaseConfig';
+import { useApp } from '../context/AppContext'; // Optional: if you store user data here too
 
 const UserLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'profile'>('home');
+
+  // 2. Get Current User
+  const user = auth.currentUser;
+  
+  // 3. Generate the dynamic avatar URL based on email (fallback to 'User' if null)
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`;
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -24,9 +34,10 @@ const UserLayout: React.FC = () => {
           </span>
         </div>
         
-        <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden">
+        {/* 4. Use the dynamic 'avatarUrl' here */}
+        <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden border border-gray-100">
           <img 
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" 
+            src={avatarUrl} 
             alt="Profile" 
             className="w-full h-full object-cover"
           />
@@ -35,14 +46,19 @@ const UserLayout: React.FC = () => {
 
       <div className="flex-1 overflow-hidden relative bg-gray-50">
         
+        {/* 1. HOME: Keep using CSS toggle (hidden/block) to save its state/loading */}
         <div className={`h-full w-full ${activeTab === 'home' ? 'block' : 'hidden'}`}>
            <UserHome />
         </div>
 
-        <div className={`h-full w-full ${activeTab === 'orders' ? 'block' : 'hidden'}`}>
-           <MyOrders />
-        </div>
+        {/* 2. ORDERS: Use Conditional Rendering (&&) to force it to play the entry animation every time */}
+        {activeTab === 'orders' && (
+           <div className="h-full w-full">
+              <MyOrders />
+           </div>
+        )}
 
+        {/* 3. PROFILE: Keep using CSS toggle to save its state/loading */}
         <div className={`h-full w-full ${activeTab === 'profile' ? 'block' : 'hidden'}`}>
            <Profile />
         </div>
@@ -58,12 +74,6 @@ const UserLayout: React.FC = () => {
             active={activeTab === 'home'}
             onClick={() => setActiveTab('home')}
           />
-          {/* <NavButton
-            icon={<Store size={22} strokeWidth={2.5} />}
-            label="Map"
-            active={activeTab === 'map'}
-            onClick={() => setActiveTab('map')}
-          /> */}
           <NavButton
             icon={<Receipt size={22} strokeWidth={2.5} />}
             label="Orders"

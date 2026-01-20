@@ -8,7 +8,6 @@ import {
 import { doc, getDoc } from 'firebase/firestore'; 
 import { db } from '@/firebaseConfig'; 
 
-// 🔒 College ID from your screenshot
 const COLLEGE_ID = "tMEBxMvwxTkfeYU5mXDW";
 
 const getOrderTotal = (items: any[]) => {
@@ -26,17 +25,14 @@ const MyOrders: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Active' | 'Past'>('Active');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // 🗂️ Local Cache for Stall Names [ID -> Name]
   const [stallNames, setStallNames] = useState<Record<string, string>>({});
   const fetchedIds = useRef<Set<string>>(new Set());
 
-  // --- 1. AUTO-REFRESH ORDERS ---
   useEffect(() => {
     const interval = setInterval(() => { loadOrders(); }, 5000);
     return () => clearInterval(interval);
   }, [loadOrders]);
 
-  // --- 2. FETCH STALL NAMES ---
   useEffect(() => {
     const fetchMissingNames = async () => {
       const uniqueIDs = new Set<string>();
@@ -81,7 +77,7 @@ const MyOrders: React.FC = () => {
   }, [orders, stallNames]); 
 
 
-  // --- 3. FILTERING LOGIC ---
+  // ---  FILTERING LOGIC ---
   const filteredOrders = orders.filter(o => {
     const isPast = ['Claimed', 'Completed', 'Cancelled'].includes(o.status as string);
     if (activeTab === 'Active') return !isPast;
@@ -135,7 +131,6 @@ const MyOrders: React.FC = () => {
   };
 
   return (
-    // Added motion.div wrapper for smooth page entry
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
@@ -162,7 +157,6 @@ const MyOrders: React.FC = () => {
 
       {/* Orders List */}
       <div className="flex-1 overflow-y-auto pb-24 px-6 pt-4">
-        {/* Removed mode="popLayout" to fix alignment jumping */}
         <AnimatePresence>
           {filteredOrders.length === 0 ? (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="flex flex-col items-center justify-center h-64 text-center mt-12">
@@ -181,7 +175,7 @@ const MyOrders: React.FC = () => {
 
                 return (
                   <motion.div
-                    layoutId={`card-container-${order.id}`}
+                    layoutId={`myorders-card-${order.id}`} 
                     key={order.id}
                     onClick={() => setSelectedId(order.id)}
                     initial={{ opacity: 0, y: 20 }}
@@ -191,17 +185,17 @@ const MyOrders: React.FC = () => {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <motion.h3 layoutId={`title-${order.id}`} className="text-base font-bold text-gray-900">
+                        <motion.h3 layoutId={`myorders-title-${order.id}`} className="text-base font-bold text-gray-900">
                           {itemsCount} {itemsCount === 1 ? 'Item' : 'Items'}
                         </motion.h3>
-                        <motion.div layoutId={`meta-${order.id}`} className="flex items-center gap-1.5 text-gray-500 mt-1">
+                        <motion.div layoutId={`myorders-meta-${order.id}`} className="flex items-center gap-1.5 text-gray-500 mt-1">
                           <Store size={14} className="text-emerald-600" />
                           <span className="text-xs font-medium text-gray-800">{displayName}</span>
                           <span className="text-xs text-gray-300">•</span>
                           <span className="text-xs text-gray-900 font-medium">₹{totalAmount}</span>
                         </motion.div>
                       </div>
-                      <motion.div layoutId={`status-${order.id}`}>
+                      <motion.div layoutId={`myorders-status-${order.id}`}>
                         {renderStatusBadge(order.status)}
                       </motion.div>
                     </div>
@@ -228,12 +222,12 @@ const MyOrders: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* EXPANDED MODAL */}
       <AnimatePresence>
         {selectedId && selectedOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedId(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <motion.div layoutId={`card-container-${selectedId}`} className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]" style={{ fontFamily: 'Geom' }}>
+            {/* FIX: Matched layoutId with the list item */}
+            <motion.div layoutId={`myorders-card-${selectedId}`} className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]" style={{ fontFamily: 'Geom' }}>
               
               <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => { e.stopPropagation(); setSelectedId(null); }} className="absolute top-4 right-4 z-20 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
                 <X size={18} />
@@ -243,13 +237,13 @@ const MyOrders: React.FC = () => {
                 <div className="mb-6">
                   <div className="flex items-start justify-between mb-2 pr-10">
                     <div>
-                      <motion.h3 layoutId={`title-${selectedId}`} className="text-xl font-bold text-gray-900">Order Details</motion.h3>
-                      <motion.div layoutId={`meta-${selectedId}`} className="flex items-center gap-1.5 text-gray-500 mt-1">
+                      <motion.h3 layoutId={`myorders-title-${selectedId}`} className="text-xl font-bold text-gray-900">Order Details</motion.h3>
+                      <motion.div layoutId={`myorders-meta-${selectedId}`} className="flex items-center gap-1.5 text-gray-500 mt-1">
                         <MapPin size={14} className="text-emerald-600" />
                         <span className="text-sm font-medium text-gray-700">{getStallName(selectedOrder)}</span>
                       </motion.div>
                     </div>
-                    <motion.div layoutId={`status-${selectedId}`}>
+                    <motion.div layoutId={`myorders-status-${selectedId}`}>
                         {renderStatusBadge(selectedOrder.status)}
                     </motion.div>
                   </div>
