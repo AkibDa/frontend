@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, User, Plus, Leaf, ChefHat, PackageCheck } from 'lucide-react';
+import { LayoutDashboard, User, Plus, ChefHat, PackageCheck } from 'lucide-react';
 import StaffDashboard from '../Pages/StaffDashboard';
 import QueueManager from '../Pages/QueueManager';
 import IncomingReservations from '../Pages/IncomingReservations';

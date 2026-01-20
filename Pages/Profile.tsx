@@ -21,7 +21,7 @@ const Profile: React.FC = () => {
   // --- STAFF VIEW ---
   if (staffProfile || userRole === 'staff') {
     return (
-      <div className="h-full bg-gray-50 overflow-y-auto">
+      <div style={{fontFamily: 'Geom'}} className="h-full bg-gray-50 overflow-y-auto">
         {/* Staff Header */}
         <div className="bg-white p-6 border-b border-gray-100">
           <div className="flex items-center gap-4 mb-6">
@@ -47,7 +47,6 @@ const Profile: React.FC = () => {
           {/* Staff Stats */}
           <div className="grid grid-cols-2 gap-3">
              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                {/* CHANGED: Label and Value to Stall Name */}
                 <p className="text-xs text-gray-400 font-bold uppercase">Stall Name</p>
                 <p className="font-mono text-sm font-semibold text-gray-700 truncate">
                   {staffProfile?.stallName || "----"}
