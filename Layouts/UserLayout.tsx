@@ -4,20 +4,22 @@ import UserHome from '../Pages/UserHome';
 import MyOrders from '../Pages/MyOrder';
 import Profile from '../Pages/Profile';
 import { motion } from 'framer-motion';
-
+import GreenPlateLogo from '../assests/GreenPlate.png'; 
 
 const UserLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'profile'>('home');
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      {/* Clean Header */}
       <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-white z-20">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">GP</span>
-          </div>
-          <span style={{ fontFamily: 'Geom' }} className="font-bold text-lg text-gray-900">
+        <div className="flex items-center gap-2"> 
+          <img 
+            src={GreenPlateLogo} 
+            alt="GreenPlate Logo" 
+            className="w-10 h-10 object-contain" 
+          />
+
+          <span style={{ fontFamily: 'Geom' }} className="font-bold text-xl text-gray-900 mt-1"> 
             GreenPlate
           </span>
         </div>

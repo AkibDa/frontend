@@ -1,74 +1,119 @@
-
 import React, { useState, useRef } from 'react';
-import { X, Camera, Sparkles, Loader2, Apple, Zap, Droplets, Target } from 'lucide-react';
+import { X, Camera, Loader2, Trash2, Save, Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { analyzeFoodImage } from '../services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '@/services/api';
+
+
+interface ScannedItem {
+  name: string;
+  price: number | string;
+  description: string;
+}
 
 const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { addDeal, managedCafeteriaId, cafeterias } = useApp();
+  const { managedCafeteriaId, cafeterias } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // State for the list of items
+  const [items, setItems] = useState<ScannedItem[]>([]);
+  const [showReview, setShowReview] = useState(false);
   
   const myCafe = cafeterias.find(c => c.id === managedCafeteriaId) || cafeterias[0];
 
-  // Form State
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [quantity, setQuantity] = useState(1);
-  const [origPrice, setOrigPrice] = useState(100);
-  const discPrice = 40;
-  const [tags, setTags] = useState<string[]>(['Veg']);
-  const [ingredients, setIngredients] = useState<string[]>([]);
-  const [nutritionalInfo, setNutritionalInfo] = useState<any>(null);
-  const [carbonSaved, setCarbonSaved] = useState(0.5);
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        setPreviewUrl(base64);
-        setIsAnalyzing(true);
-        const result = await analyzeFoodImage(base64);
-        setIsAnalyzing(false);
-        if (result) {
-          setName(result.name || '');
-          setDescription(result.description || '');
-          setQuantity(result.quantity || 1);
-          setTags(result.tags || ['Veg']);
-          setIngredients(result.ingredients || []);
-          setNutritionalInfo(result.nutritionalInfo || null);
-          setCarbonSaved(result.carbonSavedKg || 0.5);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    setIsAnalyzing(true);
+    setShowReview(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await api.post('/staff/menu/scan-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000, 
+      });
+
+      const data = response.data;
+
+      if (data.detected_items && data.detected_items.length > 0) {
+        setItems(data.detected_items.map((i: any) => ({
+          name: i.name,
+          price: i.price || '',
+          description: i.description || ''
+        })));
+        setShowReview(true);
+      } else {
+        alert("No items detected. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("Scan failed:", error);
+      alert("Failed to read menu. Please try manually adding items.");
+      setItems([]);
+      setShowReview(true);
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
-  const handlePost = () => {
-    if (!name || !previewUrl) return;
-    
-    addDeal({
-      cafeteriaId: myCafe.id,
-      name,
-      description,
-      ingredients,
-      nutritionalInfo,
-      carbonSavedKg: carbonSaved,
-      quantity,
-      originalPrice: origPrice,
-      discountedPrice: discPrice,
-      timeLeftMinutes: 120,
-      cafeteriaName: myCafe.name,
-      distance: '0.0 km',
-      imageUrl: previewUrl,
-      tags
-    });
-    onClose();
+  const handleUpdateItem = (index: number, field: keyof ScannedItem, value: any) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setItems(newItems);
+  };
+
+  const handleDeleteItem = (index: number) => {
+    const newItems = items.filter((_, i) => i !== index);
+    setItems(newItems);
+  };
+
+  // FIX: Add new item to the START of the list so it is visible immediately
+  const handleAddItem = () => {
+    setItems([{ name: '', price: '', description: '' }, ...items]);
+  };
+
+  const handlePublishMenu = async () => {
+    if (items.length === 0) return;
+    setIsUploading(true);
+
+    try {
+      // 1. Fetch Correct Stall ID
+      const meResponse = await api.get('/staff/me');
+      const correctStallId = meResponse.data.stall_id;
+
+      if (!correctStallId) throw new Error("Could not verify staff identity.");
+
+      // 2. Upload
+      await api.post('/staff/menu', {
+        stall_id: correctStallId,
+        items: items.map(item => ({
+          name: item.name,
+          price: Number(item.price) || 0,
+          description: item.description,
+          is_available: true
+        }))
+      });
+
+      alert("✅ Menu uploaded successfully!");
+      
+      // FIX: Clear the state immediately after success
+      setItems([]);
+      setShowReview(false);
+      
+      onClose();
+    } catch (error: any) {
+      console.error("Upload failed:", error);
+      const msg = error.response?.data?.message || "Failed to save menu.";
+      alert(msg);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -79,114 +124,147 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       className="fixed inset-0 z-[60] bg-white flex flex-col max-w-md mx-auto overflow-hidden"
     >
+      {/* Header */}
       <header className="p-6 border-b border-gray-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 transition-colors">
            <X size={24} />
         </button>
         <div className="flex flex-col items-center">
-            <h2 className="text-xl font-black text-gray-900 tracking-tight">Post Surplus</h2>
+            <h2 className="text-xl font-black text-gray-900 tracking-tight">Upload Menu</h2>
             <span className="text-[8px] font-black text-green-600 uppercase tracking-widest">{myCafe.name} Hub</span>
         </div>
         <div className="w-10"></div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-10 hide-scrollbar pb-32">
-        <div 
-          onClick={() => !isAnalyzing && fileInputRef.current?.click()}
-          className="w-full aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
-        >
-          {previewUrl ? (
-            <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
-          ) : (
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 hide-scrollbar pb-32">
+        
+        {/* Scanner */}
+        {!showReview && (
+          <div 
+            onClick={() => !isAnalyzing && fileInputRef.current?.click()}
+            className="w-full aspect-[3/4] bg-gray-50 border-2 border-dashed border-gray-200 rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group transition-all hover:bg-gray-100"
+          >
             <div className="flex flex-col items-center gap-4 text-center px-8">
-              <div className="w-16 h-16 bg-white rounded-3xl shadow-sm flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                <Camera className="text-green-600" size={32} />
+              <div className="w-20 h-20 bg-white rounded-full shadow-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform text-green-600">
+                <Camera size={36} strokeWidth={2.5} />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Take a photo of the surplus</p>
-              <p className="text-[9px] font-bold text-gray-300">Gemini will auto-fill nutritional data</p>
+              <h3 className="text-lg font-black text-gray-900">Scan Menu Card</h3>
+              <p className="text-xs text-gray-400 font-medium max-w-[200px]">
+                Take a clear photo of your printed menu. AI will extract all items instantly.
+              </p>
             </div>
-          )}
-          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
-          
-          <AnimatePresence>
-            {isAnalyzing && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-green-600/90 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 text-center">
-                <Loader2 className="animate-spin mb-4" size={48} />
-                <h3 className="text-xl font-black tracking-tight">Vision AI Scanner</h3>
-                <p className="text-[10px] uppercase font-bold tracking-widest text-green-100 mt-2">Analyzing ingredients & nutrients...</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Dynamic Form Area */}
-        <div className="space-y-8 animate-in fade-in duration-700">
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Menu Title</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Seasonal Garden Bowl" className="w-full bg-gray-50 border border-gray-100 py-5 px-6 rounded-2xl focus:outline-none focus:ring-4 focus:ring-green-500/10 font-black text-gray-900 tracking-tight" />
+            <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+            
+            <AnimatePresence>
+              {isAnalyzing && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-green-600/90 backdrop-blur-md flex flex-col items-center justify-center text-white p-6 text-center z-20">
+                  <Loader2 className="animate-spin mb-4" size={48} />
+                  <h3 className="text-xl font-black tracking-tight">Analyzing Menu...</h3>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-green-100 mt-2">Extracting items & prices</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+        )}
 
-          <div className="grid grid-cols-2 gap-4">
-             <div className="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
-                <p className="text-[8px] font-black text-gray-400 uppercase mb-2">Original Price</p>
-                <input type="number" value={origPrice} onChange={(e) => setOrigPrice(Number(e.target.value))} className="w-full bg-transparent font-black text-xl text-gray-900 focus:outline-none" />
+        {/* Review List */}
+        {showReview && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 space-y-4">
+             <div className="flex items-center justify-between px-1">
+                <h3 className="text-sm font-black text-gray-900 uppercase tracking-wider">Review Items ({items.length})</h3>
+                <button 
+                  type="button" 
+                  onClick={handleAddItem}
+                  className="text-xs font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition-colors flex items-center gap-1 active:scale-95"
+                >
+                  <Plus size={14} /> Add Item
+                </button>
              </div>
-             <div className="bg-gray-50 p-5 rounded-[2rem] border border-gray-100">
-                <p className="text-[8px] font-black text-gray-400 uppercase mb-2">Portions</p>
-                <div className="flex items-center justify-between">
-                   <button onClick={() => setQuantity(Math.max(1, quantity-1))} className="w-8 h-8 bg-white rounded-lg shadow-sm text-gray-400 font-black">-</button>
-                   <span className="text-xl font-black text-gray-900 tracking-tighter">{quantity}</span>
-                   <button onClick={() => setQuantity(quantity+1)} className="w-8 h-8 bg-green-600 rounded-lg shadow-md text-white font-black">+</button>
-                </div>
-             </div>
-          </div>
 
-          {nutritionalInfo && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 bg-blue-50/30 rounded-[2.5rem] border border-blue-100/50">
-               <div className="flex items-center gap-2 mb-4">
-                  <Sparkles size={14} className="text-blue-500" />
-                  <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">AI Generated Macro Profile</span>
-               </div>
-               <div className="grid grid-cols-4 gap-4">
-                  <NutriSmall label="CAL" val={nutritionalInfo.calories} icon={<Zap size={10} />} />
-                  <NutriSmall label="PRO" val={nutritionalInfo.protein} icon={<Apple size={10} />} />
-                  <NutriSmall label="FAT" val={nutritionalInfo.fat} icon={<Droplets size={10} />} />
-                  <NutriSmall label="CRB" val={nutritionalInfo.carbs} icon={<Target size={10} />} />
-               </div>
-            </motion.div>
-          )}
-
-          <div>
-             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Detected Ingredients</label>
-             <div className="flex flex-wrap gap-2">
-                {ingredients.map(ing => (
-                  <span key={ing} className="px-4 py-2 bg-gray-50 rounded-xl text-[10px] font-bold text-gray-600 border border-gray-100">{ing}</span>
+             <div className="space-y-3">
+                {items.map((item, idx) => (
+                  <motion.div 
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    key={idx}
+                    className="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm group focus-within:ring-2 focus-within:ring-green-500/20 transition-all"
+                  >
+                    <div className="flex gap-3">
+                      <div className="flex-1 space-y-2">
+                        <input 
+                          value={item.name}
+                          onChange={(e) => handleUpdateItem(idx, 'name', e.target.value)}
+                          placeholder="Item Name"
+                          className="w-full font-bold text-gray-900 placeholder:text-gray-300 focus:outline-none bg-transparent"
+                        />
+                        <input 
+                          value={item.description}
+                          onChange={(e) => handleUpdateItem(idx, 'description', e.target.value)}
+                          placeholder="Short description (optional)"
+                          className="w-full text-xs text-gray-500 placeholder:text-gray-300 focus:outline-none bg-transparent"
+                        />
+                      </div>
+                      <div className="flex flex-col items-end justify-between gap-2">
+                         <div className="flex items-center gap-1 bg-gray-50 rounded-lg px-2 py-1">
+                            <span className="text-xs font-bold text-gray-400">₹</span>
+                            <input 
+                              type="number"
+                              value={item.price}
+                              onChange={(e) => handleUpdateItem(idx, 'price', e.target.value)}
+                              placeholder="0"
+                              className="w-12 text-right font-black text-gray-900 bg-transparent focus:outline-none"
+                            />
+                         </div>
+                         <button 
+                            type="button"
+                            onClick={() => handleDeleteItem(idx)}
+                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                         >
+                            <Trash2 size={16} />
+                         </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 ))}
-                {ingredients.length === 0 && <p className="text-[10px] text-gray-300 font-bold ml-1">Awaiting AI scan...</p>}
              </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <div className="p-8 border-t border-gray-100 bg-white/80 backdrop-blur-md">
-        <button 
-          onClick={handlePost}
-          disabled={!name || !previewUrl || isAnalyzing}
-          className="w-full bg-green-600 text-white py-6 rounded-[2.5rem] font-black text-sm uppercase tracking-[0.25em] shadow-xl shadow-green-100 active:scale-95 transition-all disabled:bg-gray-100 disabled:text-gray-300 disabled:shadow-none"
-        >
-          {isAnalyzing ? 'Extracting Data...' : 'Confirm Surplus Broadcast'}
-        </button>
-      </div>
+      {/* Footer Actions */}
+      {showReview && (
+        <div className="p-6 border-t border-gray-100 bg-white/80 backdrop-blur-md flex gap-3">
+          <button 
+            type="button"
+            onClick={() => {
+                setItems([]);
+                setShowReview(false);
+            }}
+            className="px-6 py-4 rounded-2xl font-bold text-gray-500 bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            Rescan
+          </button>
+          <button 
+            type="button"
+            onClick={handlePublishMenu}
+            disabled={isUploading || items.length === 0}
+            className="flex-1 bg-green-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-green-100 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+          >
+            {isUploading ? (
+              <>
+               <Loader2 className="animate-spin" size={18} /> Saving...
+              </>
+            ) : (
+              <>
+               <Save size={18} /> Publish Menu
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 };
-
-const NutriSmall: React.FC<{ label: string; val: string | number; icon: React.ReactNode }> = ({ label, val, icon }) => (
-  <div className="text-center">
-     <div className="flex justify-center text-blue-400 mb-1">{icon}</div>
-     <p className="text-[11px] font-black text-gray-900 leading-none tracking-tighter">{val}</p>
-     <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mt-0.5">{label}</p>
-  </div>
-);
 
 export default CreatePost;

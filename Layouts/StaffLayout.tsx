@@ -6,6 +6,7 @@ import IncomingReservations from '../Pages/IncomingReservations';
 import Profile from '../Pages/Profile';
 import CreatePost from '../Pages/CreatePost';
 import { motion, AnimatePresence } from 'framer-motion';
+import GreenPlateLogo from '/assests/GreenPlate.png';
 
 const StaffLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'queue' | 'pickup' | 'profile'>('dashboard');
@@ -30,18 +31,26 @@ const StaffLayout: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50/50">
-      
-      {/* 1. Minimalist Header */}
-      <header className="px-6 py-4 flex items-center justify-between z-40 bg-white/90 backdrop-blur-md sticky top-0 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-            <Leaf size={16} className="text-white fill-current" />
-          </div>
-          <div className="flex flex-col justify-center">
-            <span style={{ fontFamily: 'Geom' }} className="text-lg font-bold text-gray-900 leading-none">
-              GreenPlate
-            </span>
-          </div>
+
+      <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-white z-20">
+        <div className="flex items-center gap-2"> 
+          <img 
+            src={GreenPlateLogo} 
+            alt="GreenPlate Logo" 
+            className="w-10 h-10 object-contain" 
+          />
+
+          <span style={{ fontFamily: 'Geom' }} className="font-bold text-xl text-gray-900 mt-1"> 
+            GreenPlate
+          </span>
+        </div>
+        
+        <div className="w-9 h-9 rounded-full bg-gray-100 overflow-hidden">
+          <img 
+            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" 
+            alt="Profile" 
+            className="w-full h-full object-cover"
+          />
         </div>
       </header>
 
