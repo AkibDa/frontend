@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+// MyOrders.tsx
+
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   QrCode, MapPin, ShoppingBag, BellRing, ChefHat, 
   CheckCircle2, X, ChevronRight, UtensilsCrossed, Store 
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore'; 
-import { db } from '@/firebaseConfig'; 
-
-const COLLEGE_ID = "tMEBxMvwxTkfeYU5mXDW";
 
 const getOrderTotal = (items: any[]) => {
   if (!items || items.length === 0) return 0;
@@ -25,57 +23,11 @@ const MyOrders: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Active' | 'Past'>('Active');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const [stallNames, setStallNames] = useState<Record<string, string>>({});
-  const fetchedIds = useRef<Set<string>>(new Set());
-
+  // Auto-refresh orders every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => { loadOrders(); }, 5000);
     return () => clearInterval(interval);
   }, [loadOrders]);
-
-  useEffect(() => {
-    const fetchMissingNames = async () => {
-      const uniqueIDs = new Set<string>();
-
-      orders.forEach(o => {
-        const id = (o as any).stall_id || o.cafeteriaName; 
-        if (id && !stallNames[id] && !fetchedIds.current.has(id) && id.length > 3) { 
-           uniqueIDs.add(id);
-        }
-      });
-
-      if (uniqueIDs.size === 0) return;
-
-      uniqueIDs.forEach(id => fetchedIds.current.add(id));
-
-      const newNames: Record<string, string> = {};
-      
-      await Promise.all(Array.from(uniqueIDs).map(async (stallId) => {
-        try {
-          const docRef = doc(db, "colleges", COLLEGE_ID, "stalls", stallId);
-          const snap = await getDoc(docRef);
-          
-          if (snap.exists()) {
-            newNames[stallId] = snap.data().name || "Unnamed Stall";
-          } else {
-            newNames[stallId] = "Unknown Stall"; 
-          }
-        } catch (err) {
-          console.error(`Error fetching stall ${stallId}:`, err);
-          newNames[stallId] = "Stall (Offline)"; 
-        }
-      }));
-
-      if (Object.keys(newNames).length > 0) {
-        setStallNames(prev => ({ ...prev, ...newNames }));
-      }
-    };
-
-    if (orders.length > 0) {
-      fetchMissingNames();
-    }
-  }, [orders, stallNames]); 
-
 
   // ---  FILTERING LOGIC ---
   const filteredOrders = orders.filter(o => {
@@ -86,17 +38,12 @@ const MyOrders: React.FC = () => {
 
   const selectedOrder = orders.find(o => o.id === selectedId);
 
+  // Lock body scroll when modal is open
   useEffect(() => {
     if (selectedId) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = 'unset';
     return () => { document.body.style.overflow = 'unset'; };
   }, [selectedId]);
-
-  const getStallName = (order: any) => {
-    const id = order.stall_id || order.cafeteriaName;
-    if (stallNames[id]) return stallNames[id];
-    return "Loading..."; 
-  };
 
   const renderStatusBadge = (status: string) => {
     if (status === 'Ready') {
@@ -171,7 +118,8 @@ const MyOrders: React.FC = () => {
               {filteredOrders.map(order => {
                 const itemsCount = getItemsCount(order.items);
                 const totalAmount = getOrderTotal(order.items);
-                const displayName = getStallName(order);
+                // FIX: Trust the backend name directly
+                const displayName = order.cafeteriaName || "Unknown Stall";
 
                 return (
                   <motion.div
@@ -226,7 +174,6 @@ const MyOrders: React.FC = () => {
         {selectedId && selectedOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedId(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            {/* FIX: Matched layoutId with the list item */}
             <motion.div layoutId={`myorders-card-${selectedId}`} className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 flex flex-col max-h-[85vh]" style={{ fontFamily: 'Geom' }}>
               
               <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={(e) => { e.stopPropagation(); setSelectedId(null); }} className="absolute top-4 right-4 z-20 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
@@ -240,7 +187,7 @@ const MyOrders: React.FC = () => {
                       <motion.h3 layoutId={`myorders-title-${selectedId}`} className="text-xl font-bold text-gray-900">Order Details</motion.h3>
                       <motion.div layoutId={`myorders-meta-${selectedId}`} className="flex items-center gap-1.5 text-gray-500 mt-1">
                         <MapPin size={14} className="text-emerald-600" />
-                        <span className="text-sm font-medium text-gray-700">{getStallName(selectedOrder)}</span>
+                        <span className="text-sm font-medium text-gray-700">{selectedOrder.cafeteriaName || "Unknown Stall"}</span>
                       </motion.div>
                     </div>
                     <motion.div layoutId={`myorders-status-${selectedId}`}>
@@ -314,8 +261,8 @@ const MyOrders: React.FC = () => {
                   transition={{ delay: 0.4 }} 
                   className="mt-auto pt-2"
                 >
-                  {/* CASE 1: READY FOR PICKUP */}
-                  {selectedOrder.status === 'Ready' && (
+                  {/* Status Badges Code Here - Same as before */}
+                   {selectedOrder.status === 'Ready' && (
                     <div className="w-full py-4 rounded-xl text-sm font-bold bg-emerald-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-200">
                       <BellRing size={20} className="animate-pulse" />
                       <span>Order Ready for Pickup</span>
@@ -338,7 +285,7 @@ const MyOrders: React.FC = () => {
                     </div>
                   )}
 
-                  {/* CASE 4: CANCELLED */}
+                   {/* CASE 4: CANCELLED */}
                   {(selectedOrder.status as string) === 'Cancelled' && (
                     <div className="w-full py-4 rounded-xl text-sm font-bold bg-red-50 text-red-500 border border-red-100 flex items-center justify-center gap-2">
                       <X size={20} />
