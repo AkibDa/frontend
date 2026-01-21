@@ -13,8 +13,7 @@ api.interceptors.request.use(async (config) => {
   try {
     const user = auth.currentUser;
     if (user) {
-      // Get the existing token (false = cached, fast)
-      const token = await user.getIdToken(false);
+      const token = await user.getIdToken(false); // Use cached token
       config.headers.Authorization = `Bearer ${token}`;
     }
   } catch (error) {
@@ -28,21 +27,16 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // Check if error is 401 (Unauthorized) AND we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      console.warn(`401 Unauthorized on ${originalRequest.url}. Retrying...`); // ✅ FIXED
+      console.warn(`401 Unauthorized. Refreshing token...`);
       
-      originalRequest._retry = true; // Mark as retried to prevent infinite loops
+      originalRequest._retry = true;
       
       try {
         const user = auth.currentUser;
         if (user) {
-          const newToken = await user.getIdToken(true);
-          
-          // Update the header with the new token
+          const newToken = await user.getIdToken(true); // Force refresh
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          
-          // 🔁 Retry the original request with the new token
           return api(originalRequest);
         }
       } catch (refreshError) {
@@ -50,7 +44,6 @@ api.interceptors.response.use(
       }
     }
     
-    // If it's not a 401 or retry failed, return the error as usual
     return Promise.reject(error);
   }
 );
@@ -66,24 +59,23 @@ export const createPaymentOrder = async (stallId: string, items: any[]) =>
 
 export const verifyOrder = async (data: any) => (await api.post('/user/order/verify', data)).data;
 
-// --- STAFF ENDPOINTS ---  
 export const getStaffMenu = async () => {
   const response = await api.get('/staff/menu');
   return response.data;
 };
 
 export const deleteMenuItem = async (itemId: string) => {
-  const response = await api.delete(`/staff/menu/${itemId}`); // ✅ FIXED
+  const response = await api.delete(`/staff/menu/${itemId}`);
   return response.data;
 };
 
 export const getStaffOrders = async (status: string) => {
-  const response = await api.get(`/staff/orders?status=${status}`); // ✅ FIXED
+  const response = await api.get(`/staff/orders?status=${status}`);
   return response.data; 
 };
 
 export const updateOrderStatus = async (orderId: string, status: string) => {
-  const response = await api.patch(`/staff/orders/${orderId}/status`, { status }); // ✅ FIXED
+  const response = await api.patch(`/staff/orders/${orderId}/status`, { status });
   return response.data;
 };
 

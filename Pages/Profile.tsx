@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Settings, LogOut, Bell, Shield, Store, UserCircle, Briefcase } from 'lucide-react';
+import { Settings, LogOut, Bell, Shield, Store, UserCircle, Briefcase, Edit2, Check, X } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
+import api from '@/services/api';
 
 const Profile: React.FC = () => {
-  const { resetApp, staffProfile, userRole } = useApp();
+  const { resetApp, staffProfile, userRole, setStaffProfile } = useApp();
   const user = auth.currentUser;
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const currentName = staffProfile?.name || user?.displayName || user?.email?.split('@')[0] || 'User';
 
   const handleLogout = async () => {
     try {
@@ -18,8 +26,64 @@ const Profile: React.FC = () => {
     }
   };
 
-  // --- STAFF VIEW ---
-  if (staffProfile || userRole === 'staff') {
+  const startEditing = () => {
+    setEditedName(currentName);
+    setIsEditingName(true);
+    setError(null);
+  };
+
+  const cancelEditing = () => {
+    setIsEditingName(false);
+    setEditedName('');
+    setError(null);
+  };
+
+  const saveNameChange = async () => {
+    if (!editedName.trim()) {
+      setError('Name cannot be empty');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("Not authenticated");
+
+      // For staff members
+      if (staffProfile || (userRole as string) === 'staff') {
+        await api.patch(
+          '/staff/profile',
+          { name: editedName.trim() },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Update local state
+        if (staffProfile) {
+          setStaffProfile({
+            ...staffProfile,
+            name: editedName.trim()
+          });
+        }
+      } else {
+        // For students
+        await api.patch(
+          '/user/profile',
+          { name: editedName.trim() },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      setIsEditingName(false);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to update name');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (staffProfile || (userRole as string) === 'staff') {
     return (
       <div style={{fontFamily: 'Geom'}} className="h-full bg-gray-50 overflow-y-auto">
         {/* Staff Header */}
@@ -28,17 +92,59 @@ const Profile: React.FC = () => {
             <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white shadow-lg shadow-gray-200">
               <Briefcase size={28} />
             </div>
-            <div>
-              <h2 style={{ fontFamily: 'Geom' }} className="text-xl font-bold text-gray-900">
-                {user?.email?.split('@')[0] || "Staff Member"}
-              </h2>
+            <div className="flex-1 min-w-0">
+              {isEditingName ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Enter your name"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveNameChange();
+                        if (e.key === 'Escape') cancelEditing();
+                      }}
+                    />
+                    <button
+                      onClick={saveNameChange}
+                      disabled={saving}
+                      className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50"
+                    >
+                      <Check size={16} />
+                    </button>
+                    <button
+                      onClick={cancelEditing}
+                      disabled={saving}
+                      className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  {error && <p className="text-xs text-red-500">{error}</p>}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h2 style={{ fontFamily: 'Geom' }} className="text-xl font-bold text-gray-900 truncate">
+                    {currentName}
+                  </h2>
+                  <button
+                    onClick={startEditing}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Edit name"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                </div>
+              )}
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
                   {staffProfile?.role || "Staff"}
                 </span>
-                {/* CHANGED: Showing Stall Name here */}
-                <span className="text-xs text-gray-400">
-                  {staffProfile?.stallName || "GreenPlate Stall"}
+                <span className="text-xs text-gray-400 truncate">
+                  {user?.email}
                 </span>
               </div>
             </div>
@@ -98,11 +204,54 @@ const Profile: React.FC = () => {
                 />
              </div>
           </div>
-          <div>
-            <h2 style={{ fontFamily: 'Geom' }} className="text-xl font-bold text-gray-900">
-              {user?.displayName || user?.email?.split('@')[0] || "Student"}
-            </h2>
-            <p className="text-sm text-gray-500">{user?.email}</p>
+          <div className="flex-1 min-w-0">
+            {isEditingName ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter your name"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveNameChange();
+                      if (e.key === 'Escape') cancelEditing();
+                    }}
+                  />
+                  <button
+                    onClick={saveNameChange}
+                    disabled={saving}
+                    className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50"
+                  >
+                    <Check size={16} />
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    disabled={saving}
+                    className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                {error && <p className="text-xs text-red-500">{error}</p>}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h2 style={{ fontFamily: 'Geom' }} className="text-xl font-bold text-gray-900 truncate">
+                  {currentName}
+                </h2>
+                <button
+                  onClick={startEditing}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Edit name"
+                >
+                  <Edit2 size={16} />
+                </button>
+              </div>
+            )}
+            <p className="text-sm text-gray-500 truncate">{user?.email}</p>
           </div>
         </div>
 

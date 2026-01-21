@@ -26,10 +26,8 @@ const CreatePost: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [showReview, setShowReview] = useState(false);
 
-  // 1. New State for Custom Notification
   const [notification, setNotification] = useState<NotificationState | null>(null);
 
-  // Helper to show notification
   const showNotification = (message: string, type: 'success' | 'error') => {
     setNotification({ message, type });
     // Auto-hide after 3 seconds

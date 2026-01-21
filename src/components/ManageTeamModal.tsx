@@ -13,6 +13,7 @@ interface ManageTeamModalProps {
 interface StaffMember {
   uid: string;
   email: string;
+  name?: string;
   role: "manager" | "staff";
   status: string;
 }
@@ -117,6 +118,15 @@ const ManageTeamModal: React.FC<ManageTeamModalProps> = ({ onClose }) => {
     }
   };
 
+  const getDisplayName = (staff: StaffMember) => {
+    return staff.name || staff.email.split('@')[0];
+  };
+
+  const getInitials = (staff: StaffMember) => {
+    const name = staff.name || staff.email.split('@')[0];
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   return (
     <AnimatePresence>
       {/* 1. Backdrop Overlay */}
@@ -138,7 +148,7 @@ const ManageTeamModal: React.FC<ManageTeamModalProps> = ({ onClose }) => {
             transition: { type: "spring", duration: 0.5, bounce: 0.3 }
           }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside card
+          onClick={(e) => e.stopPropagation()}
         >
           
           {/* Header */}
@@ -200,8 +210,13 @@ const ManageTeamModal: React.FC<ManageTeamModalProps> = ({ onClose }) => {
                       className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-emerald-200 hover:shadow-md transition-all duration-200"
                     >
                       <div className="flex items-center gap-4 overflow-hidden flex-1">
+                        {/* Avatar with initials */}
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold shrink-0 shadow-sm ${staff.role === 'manager' ? 'bg-gray-900' : 'bg-emerald-500'}`}>
-                          {staff.role === 'manager' ? <Shield size={20} /> : <User size={20} />}
+                          {staff.name ? (
+                            <span className="text-sm">{getInitials(staff)}</span>
+                          ) : (
+                            staff.role === 'manager' ? <Shield size={20} /> : <User size={20} />
+                          )}
                         </div>
                         
                         <div className="min-w-0 flex-1 mr-2">
@@ -214,9 +229,12 @@ const ManageTeamModal: React.FC<ManageTeamModalProps> = ({ onClose }) => {
                               placeholder="Enter new email"
                             />
                           ) : (
-                            <p className="font-semibold text-gray-900 truncate text-sm">
-                              {staff.email}
-                            </p>
+                            <>
+                              <p className="font-semibold text-gray-900 truncate text-sm">
+                                {getDisplayName(staff)}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">{staff.email}</p>
+                            </>
                           )}
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">

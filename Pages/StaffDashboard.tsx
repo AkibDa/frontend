@@ -174,7 +174,7 @@ const StaffDashboard: React.FC = () => {
       <div className="px-6 pt-8 pb-6 bg-white border-b border-gray-100 flex justify-between">
         <div>
           <p className="text-xs font-bold text-gray-400 uppercase">Control Panel</p>
-          <h1 className="text-3xl font-bold">{myCafe.name}</h1>
+          <h1 className="text-3xl font-bold">{staffProfile.stallName || myCafe.name}</h1>
           <div className="flex items-center gap-2 mt-2">
             <span className={`w-2 h-2 rounded-full ${myCafe.isOpen ? "bg-emerald-500" : "bg-red-500"}`} />
             <span className="text-sm text-gray-500">{myCafe.isOpen ? "Store is Live" : "Store is Closed"}</span>
