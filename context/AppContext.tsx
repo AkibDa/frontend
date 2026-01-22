@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback} from 'react';
 
 import { UserRole, AppState, FoodDeal, Order, Cafeteria } from '../types';
 import { INITIAL_DEALS, INITIAL_CAFETERIAS } from '../constants';

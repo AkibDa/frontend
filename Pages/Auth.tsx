@@ -8,7 +8,13 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
 
-const Auth: React.FC = () => {
+type AuthProps = {
+  verifyOnly?: boolean;
+};
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const Auth: React.FC<AuthProps> = ({ verifyOnly = false }) => {
   const { setUserRole, setOnboarded, setVerified, setStaffProfile } = useApp();
 
   const [role, setRole] = useState<UserRole>(UserRole.USER);
@@ -27,10 +33,15 @@ const Auth: React.FC = () => {
       return;
     }
 
+    if (verifyOnly && isSignUp) {
+      setError('Sign up is disabled for this flow.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 1️⃣ Firebase Auth (Login or SignUp)
+      // 1️⃣ Firebase Auth
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
@@ -46,16 +57,18 @@ const Auth: React.FC = () => {
       }
 
       // 3️⃣ Get fresh token
+
       const token = await user.getIdToken(true);
 
       // =========================
       // 👨‍🎓 STUDENT FLOW
       // =========================
       if (role === UserRole.USER) {
-        const res = await fetch('http://localhost:8000/auth/verify-student', {
+        const res = await fetch(`${API_URL}/auth/verify-student`, {
+
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({})
@@ -77,9 +90,8 @@ const Auth: React.FC = () => {
       // =========================
       // 👔 STAFF FLOW
       // =========================
-      
-      // 1. Verify Staff
-      const verifyRes = await fetch('http://localhost:8000/auth/verify-staff', {
+
+      const verifyRes = await fetch(`${API_URL}/auth/verify-staff`, {
         method: 'POST',
         headers: { 
           Authorization: `Bearer ${token}`, 
@@ -96,7 +108,7 @@ const Auth: React.FC = () => {
       const verifyData = await verifyRes.json();
 
       // 2. Activate Staff (if status is inactive)
-      const activateRes = await fetch('http://localhost:8000/staff/activate', {
+      const activateRes = await fetch(`${API_URL}/staff/activate`, {
         method: 'POST',
         headers: { 
           Authorization: `Bearer ${token}`, 
@@ -114,7 +126,7 @@ const Auth: React.FC = () => {
       }
 
       // 3. Get Profile
-      const profileRes = await fetch('http://localhost:8000/staff/me', {
+      const profileRes = await fetch(`${API_URL}/staff/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -129,7 +141,7 @@ const Auth: React.FC = () => {
         role: profile.role,
         stallId: profile.stall_id,
         stallName: profile.stall_name,
-        email: profile.email,
+        email: profile.email
       });
 
       setUserRole(UserRole.STAFF);
@@ -137,9 +149,8 @@ const Auth: React.FC = () => {
       setOnboarded(true);
 
     } catch (err: any) {
-      console.error("Auth Error:", err);
+      console.error('Auth Error:', err);
 
-      // Detailed Error Handling
       if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
         setError('Account not found. Please check your credentials.');
       } else if (err?.code === 'auth/wrong-password') {
@@ -263,19 +274,18 @@ const Auth: React.FC = () => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button 
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setError(null);
               }}
               className="text-green-600 font-medium hover:underline"
             >
-              {isSignUp ? "Sign In" : "Sign Up"}
+              {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>
           </p>
         </div>
-
       </div>
     </div>
   );

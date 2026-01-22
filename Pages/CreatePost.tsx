@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Camera, Loader2, Trash2, Save, Plus, CheckCircle, AlertTriangle } from 'lucide-react'; // Added icons
 import { useApp } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
