@@ -79,7 +79,7 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly = false }) => {
           throw new Error(errData.message || `Verification failed: ${res.status}`);
         }
 
-        const data = await res.json();
+        await res.json();
 
         setUserRole(UserRole.USER);
         setVerified(true);
@@ -105,7 +105,7 @@ const Auth: React.FC<AuthProps> = ({ verifyOnly = false }) => {
         throw new Error(errData.message || "Staff verification failed");
       }
 
-      const verifyData = await verifyRes.json();
+       await verifyRes.json();
 
       // 2. Activate Staff (if status is inactive)
       const activateRes = await fetch(`${API_URL}/staff/activate`, {
