@@ -10,6 +10,7 @@ type StaffProfile = {
   stallId: string;
   stallName: string;
   email: string;
+  name?: string;
 }
 
 interface AppContextType extends AppState {

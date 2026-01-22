@@ -4,7 +4,7 @@ import { UserRole } from '../types';
 import { useApp } from '../context/AppContext';
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
 } from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
 
@@ -37,31 +37,36 @@ const Auth: React.FC = () => {
         await signInWithEmailAndPassword(auth, email, password);
       }
 
-      // 2️⃣ Force Token Refresh to ensure we have the latest claims
+      // 2️⃣ Wait for auth state to settle
+      await new Promise(res => setTimeout(res, 500));
+
       const user = auth.currentUser;
-      if (!user) throw new Error('Authentication failed. No user found.');
-      
+      if (!user) {
+        throw new Error("Authentication failed - no user found");
+      }
+
+      // 3️⃣ Get fresh token
       const token = await user.getIdToken(true);
 
       // =========================
       // 👨‍🎓 STUDENT FLOW
       // =========================
       if (role === UserRole.USER) {
-        // 🔒 Use native fetch to avoid Axios interceptor conflicts
         const res = await fetch('http://localhost:8000/auth/verify-student', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({}) // Send empty object, not null
+          body: JSON.stringify({})
         });
 
         if (!res.ok) {
-           // Try to parse error message from backend
-           const errData = await res.json().catch(() => ({}));
-           throw new Error(errData.message || `Verification failed: ${res.status}`);
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || `Verification failed: ${res.status}`);
         }
+
+        const data = await res.json();
 
         setUserRole(UserRole.USER);
         setVerified(true);
@@ -76,25 +81,47 @@ const Auth: React.FC = () => {
       // 1. Verify Staff
       const verifyRes = await fetch('http://localhost:8000/auth/verify-staff', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify({})
       });
-      if (!verifyRes.ok) throw new Error("Staff verification failed");
+      
+      if (!verifyRes.ok) {
+        const errData = await verifyRes.json().catch(() => ({}));
+        throw new Error(errData.message || "Staff verification failed");
+      }
 
-      // 2. Activate Staff
+      const verifyData = await verifyRes.json();
+
+      // 2. Activate Staff (if status is inactive)
       const activateRes = await fetch('http://localhost:8000/staff/activate', {
-         method: 'POST',
-         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-         body: JSON.stringify({})
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({})
       });
-      if (!activateRes.ok) throw new Error("Staff activation failed");
+      
+      if (!activateRes.ok) {
+        const errData = await activateRes.json().catch(() => ({}));
+        // Don't throw error if already active
+        if (!errData.message?.includes('Already active')) {
+          console.warn("Staff activation warning:", errData.message);
+        }
+      }
 
       // 3. Get Profile
       const profileRes = await fetch('http://localhost:8000/staff/me', {
-         headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
       
-      if (!profileRes.ok) throw new Error("Failed to load staff profile");
+      if (!profileRes.ok) {
+        const errData = await profileRes.json().catch(() => ({}));
+        throw new Error(errData.message || "Failed to load staff profile");
+      }
       
       const profile = await profileRes.json();
 
@@ -114,13 +141,23 @@ const Auth: React.FC = () => {
 
       // Detailed Error Handling
       if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
-        setError('Account not found. Please Sign Up first.');
+        setError('Account not found. Please check your credentials.');
       } else if (err?.code === 'auth/wrong-password') {
         setError('Incorrect password.');
       } else if (err?.code === 'auth/email-already-in-use') {
-        setError('Email already in use. Please Sign In.');
-      } else if (err.message.includes('401')) {
-        setError('Access Denied. You may need to use a college email.');
+        setError('Email already in use. Please sign in instead.');
+      } else if (err?.code === 'auth/weak-password') {
+        setError('Password should be at least 6 characters.');
+      } else if (err?.code === 'auth/invalid-email') {
+        setError('Invalid email address.');
+      } else if (err.message?.includes('college domain')) {
+        setError('Your college is not registered with GreenPlate.');
+      } else if (err.message?.includes('not a registered staff')) {
+        setError('You are not registered as staff. Please contact your manager.');
+      } else if (err.message?.includes('Staff accounts are not authorized')) {
+        setError('Staff accounts cannot log in as students. Please select Staff role.');
+      } else if (err.message?.includes('Not authorized as student')) {
+        setError('This account is not authorized as a student.');
       } else {
         setError(err.message || 'Authentication failed. Please try again.');
       }
@@ -199,6 +236,11 @@ const Auth: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !loading) {
+                  handleAuth();
+                }
+              }}
               className="w-full py-4 pl-12 pr-12 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
             />
             <button
