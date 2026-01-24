@@ -1,17 +1,24 @@
-
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback} from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from 'react';
 
 import { UserRole, AppState, FoodDeal, Order, Cafeteria } from '../types';
 import { INITIAL_DEALS, INITIAL_CAFETERIAS } from '../constants';
 import { auth } from '@/firebaseConfig';
+import api from '@/services/api'; // ✅ USE AXIOS ONLY
 
 type StaffProfile = {
-  role: "manager" | "staff";
+  role: 'manager' | 'staff';
   stallId: string;
   stallName: string;
   email: string;
   name?: string;
-}
+};
 
 interface AppContextType extends AppState {
   setUserRole: (role: UserRole | null) => void;
@@ -39,63 +46,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [deals, setDeals] = useState<FoodDeal[]>(INITIAL_DEALS);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  const apiFetch = useCallback(async (endpoint: string) => {
-    if (!auth.currentUser) throw new Error("No user logged in");
-
-    let token = await auth.currentUser.getIdToken();
-    
-    let res = await fetch(`http://localhost:8000${endpoint}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (res.status === 401) {
-      console.warn(`401 on ${endpoint} - Refreshing token and retrying...`);
-      token = await auth.currentUser.getIdToken(true); // Force Refresh
-      
-      res = await fetch(`http://localhost:8000${endpoint}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-    }
-
-    if (!res.ok) throw new Error(`Request to ${endpoint} failed with ${res.status}`);
-    
-    return res.json();
-  }, []);
-
+  // ======================================================
+  // ✅ LOAD USER ORDERS (ANDROID SAFE)
+  // ======================================================
   const loadOrders = useCallback(async () => {
     if (userRole !== UserRole.USER || !auth.currentUser) return;
 
     try {
-      const data = await apiFetch("/user/orders");
+      const response = await api.get('/user/orders');
+      const data = response.data;
 
-      // Handle different response formats safely
-      if (data && typeof data === "object" && "orders" in data && Array.isArray((data as any).orders)) {
-        setOrders((data as any).orders);
+      // Handle multiple backend formats safely
+      if (data && typeof data === 'object' && 'orders' in data && Array.isArray(data.orders)) {
+        setOrders(data.orders);
       } else if (Array.isArray(data)) {
         setOrders(data);
       } else {
         setOrders([]);
       }
     } catch (err) {
-      console.error("Failed to load orders:", err);
+      console.error('Failed to load orders:', err);
+      setOrders([]);
     }
-  }, [userRole, apiFetch]);
+  }, [userRole]);
 
-
+  // ======================================================
+  // UI HELPERS
+  // ======================================================
   const addDeal = (dealData: Omit<FoodDeal, 'id' | 'isClaimed'>) => {
     const newDeal: FoodDeal = {
       ...dealData,
       id: Math.random().toString(36).substring(2, 11),
       isClaimed: false,
     };
-    setDeals(prev => [newDeal, ...prev]);
+    setDeals((prev) => [newDeal, ...prev]);
   };
 
   const toggleCafeteriaStatus = (id: string) => {
-    setCafeterias(prev =>
-      prev.map(c =>
-        c.id === id ? { ...c, isOpen: !c.isOpen } : c
-      )
+    setCafeterias((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, isOpen: !c.isOpen } : c))
     );
   };
 
@@ -108,24 +97,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setOrders([]);
   };
 
-
-  // ------------------------------------------------------------------
-  // 🔄 useEffect: Listens for Auth Changes
-  // ------------------------------------------------------------------
+  // ======================================================
+  // 🔄 AUTH LISTENER → LOAD ORDERS
+  // ======================================================
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => {
-      if (user) {
-        if (userRole === UserRole.USER) {
-          loadOrders();
-        }
+      if (user && userRole === UserRole.USER) {
+        loadOrders();
       } else {
-        setOrders([]); // Clear data on logout
+        setOrders([]);
       }
     });
 
     return () => unsub();
   }, [userRole, loadOrders]);
-
 
   return (
     <AppContext.Provider
