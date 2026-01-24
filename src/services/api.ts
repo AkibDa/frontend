@@ -2,15 +2,12 @@ import axios from 'axios';
 import { auth } from '@/firebaseConfig';
 import { Capacitor } from '@capacitor/core';
 
-// ---------------- API BASE URL ----------------
 export const API_BASE_URL =
   Capacitor.isNativePlatform()
     ? 'http://10.93.192.254:8000'
     : import.meta.env.VITE_API_BASE_URL;
 
-console.log('🔥 API_BASE_URL =', API_BASE_URL);
 
-// ---------------- AXIOS INSTANCE ----------------
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -19,7 +16,6 @@ const api = axios.create({
   timeout: 15000,
 });
 
-// ---------------- REQUEST INTERCEPTOR ----------------
 api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
 
@@ -33,7 +29,6 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// ---------------- RESPONSE INTERCEPTOR ----------------
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -44,7 +39,6 @@ api.interceptors.response.use(
       message: error.message,
     });
 
-    // Token refresh ONLY if user already exists
     if (error.response?.status === 401 && auth.currentUser) {
       try {
         const newToken = await auth.currentUser.getIdToken(true);

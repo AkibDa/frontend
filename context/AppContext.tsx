@@ -46,9 +46,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [deals, setDeals] = useState<FoodDeal[]>(INITIAL_DEALS);
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // ======================================================
-  // ✅ LOAD USER ORDERS (ANDROID SAFE)
-  // ======================================================
   const loadOrders = useCallback(async () => {
     if (userRole !== UserRole.USER || !auth.currentUser) return;
 
@@ -70,9 +67,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [userRole]);
 
-  // ======================================================
-  // UI HELPERS
-  // ======================================================
   const addDeal = (dealData: Omit<FoodDeal, 'id' | 'isClaimed'>) => {
     const newDeal: FoodDeal = {
       ...dealData,
@@ -97,9 +91,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setOrders([]);
   };
 
-  // ======================================================
-  // 🔄 AUTH LISTENER → LOAD ORDERS
-  // ======================================================
   useEffect(() => {
     const unsub = auth.onAuthStateChanged((user) => {
       if (user && userRole === UserRole.USER) {
