@@ -3,12 +3,11 @@ import { Home, Receipt, User as UserIcon } from 'lucide-react';
 import UserHome from '../Pages/UserHome';
 import MyOrders from '../Pages/MyOrder';
 import Profile from '../Pages/Profile';
-import { motion, AnimatePresence } from 'framer-motion'; 
+import { motion} from 'framer-motion'; 
 import GreenPlateLogo from '../assests/GreenPlate.png'; 
 
 // 1. Import Auth to get the current user
-import { auth } from '@/firebaseConfig';
-import { useApp } from '../context/AppContext'; // Optional: if you store user data here too
+import { auth } from '@/firebaseConfig';// Optional: if you store user data here too
 
 const UserLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'orders' | 'profile'>('home');

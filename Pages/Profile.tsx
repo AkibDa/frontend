@@ -80,6 +80,7 @@ const Profile: React.FC = () => {
 
   // --- STAFF VIEW ---
   if (staffProfile || (userRole as string) === 'staff') {
+
     return (
       <div style={{fontFamily: 'Geom'}} className="h-full bg-gray-50 overflow-y-auto">
         <div className="bg-white p-6 border-b border-gray-100">

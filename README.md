@@ -74,6 +74,130 @@ npm run lint        # Run ESLint
 npm run type-check  # Check TypeScript types
 ```
 
+### capacitor setup
+Install capacitor dependencies---
+    npm install @capacitor/core @capacitor/cli
+
+Build the Vite project---
+    npm run build
+
+Initialize Capacitor---
+    npx cap init
+    
+When prompted---
+    App name: GreenPlate
+    App ID: com.greenplate.app
+
+Install Android platform---
+    npm install @capacitor/android
+    npx cap add android
+
+Sync web assets with Android---
+    npm run build
+    npx cap sync
+
+Open project in Android Studio---
+    npx cap open android
+
+
+### Find you IP Address Windows
+Step 1: Open system shell
+    On Windows
+        Win + R
+    Type:
+        cmd
+        Press Enter
+
+Step 2: Find your local IP address
+    Run:
+        ipconfig
+    Look for your active network adapter (Wi-Fi or Ethernet) and note:
+        IPv4 Address . . . . . . . . . . : 192.168.x.x
+    Example:
+        192.168.1.7
+
+Step 3: Update API base URL
+    Open:
+        src/services/api.ts
+        
+export const API_BASE_URL =
+  Capacitor.isNativePlatform()
+    ? 'http://x.x.x.x:8000'
+    : import.meta.env.VITE_API_BASE_URL;
+
+    replace the x with your ip address
+
+    example: const BASE_URL = "http://192.168.1.7:5000";
+
+Step 4: Rebuild and sync Capacitor
+    npm run build
+    npx cap sync
+
+        
+
+### Finding Local IP Address on macOS
+
+Method 1: Using Terminal
+
+Open Terminal
+Press Cmd + Space
+Search for: Terminal
+Press Enter
+
+Get Wi-Fi IP address
+Run the following command:
+
+ipconfig getifaddr en0
+
+This will output something like:
+
+192.168.1.7
+
+This is your local IPv4 address.
+
+If you are using Ethernet, run:
+
+ipconfig getifaddr en1
+
+Method 2: Using System Settings
+
+Open System Settings
+
+Go to Network → Wi-Fi
+
+Click the connected network
+
+Look for IP Address: 192.168.x.x
+
+Updating the API Base URL
+
+Open the following file:
+
+src/api/api.ts
+
+Update the base URL:
+
+const BASE_URL = "http://192.168.1.7:5000
+";
+
+Replace 192.168.1.7 with your actual IP address.
+
+Rebuild and Sync Capacitor
+
+After updating the API URL, run:
+
+npm run build
+npx cap sync
+
+Notes
+
+Phone and laptop must be on the same Wi-Fi network
+Backend server must be running
+Firewall must allow the backend port
+localhost will not work on physical Android devices
+        
+
+
 ## 🌐 Environment Variables
 
 Create a `.env` file in the root directory:

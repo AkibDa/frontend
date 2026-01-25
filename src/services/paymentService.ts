@@ -5,6 +5,30 @@ interface CartItem {
   quantity: number;
 }
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
+const loadRazorpaySDK = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
+
+    document.body.appendChild(script);
+  });
+};
+
 export const initiatePayment = async (
   cartItems: CartItem[],
   stallId: string,
@@ -19,27 +43,18 @@ export const initiatePayment = async (
   error?: string;
 }> => {
   try {
-    console.log('🔄 Creating payment order...', { stallId, items: cartItems });
+    console.log('🔄 Creating payment order...', { stallId, cartItems });
 
+    // 1️⃣ Create order from backend
     const orderData = await createPaymentOrder(stallId, cartItems);
-    console.log('✅ Order created:', orderData);
 
-    // Load Razorpay SDK if not loaded
-    if (!(window as any).Razorpay) {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      document.body.appendChild(script);
+    // 2️⃣ Load Razorpay SDK
+    await loadRazorpaySDK();
 
-      await new Promise((resolve, reject) => {
-        script.onload = () => resolve(true);
-        script.onerror = () => reject(new Error('Failed to load Razorpay SDK'));
-      });
-    }
-
-    return new Promise((resolve) => {
+    // 3️⃣ Open Razorpay checkout
+    return await new Promise((resolve) => {
       const options = {
-        key: orderData.key_id,
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // ✅ FROM ENV
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'GreenPlate',
@@ -51,10 +66,12 @@ export const initiatePayment = async (
           name: userName,
         },
 
-        theme: { color: '#10B981' },
+        theme: {
+          color: '#10B981',
+        },
 
-        handler: function (response: any) {
-          console.log('✅ Razorpay handler response:', response);
+        handler: (response: any) => {
+          console.log('✅ Razorpay success:', response);
 
           resolve({
             success: true,
@@ -66,7 +83,7 @@ export const initiatePayment = async (
         },
 
         modal: {
-          ondismiss: function () {
+          ondismiss: () => {
             resolve({
               success: false,
               error: 'Payment cancelled by user',
@@ -75,15 +92,15 @@ export const initiatePayment = async (
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
+      const rzp = new window.Razorpay(options);
       rzp.open();
     });
   } catch (error: any) {
-    console.error('Payment Error:', error);
+    console.error('❌ Payment Error:', error);
 
     return {
       success: false,
-      error: error.message || 'Payment failed',
+      error: error?.message || 'Payment failed',
     };
   }
 };

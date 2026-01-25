@@ -7,8 +7,18 @@ import {
   createUserWithEmailAndPassword,
 } from 'firebase/auth';
 import { auth } from '@/firebaseConfig';
+import {
+  verifyStudent,
+  verifyStaff,
+  activateStaff,
+  getStaffProfile,
+} from '@/services/api';
 
-const Auth: React.FC = () => {
+type AuthProps = {
+  verifyOnly?: boolean;
+};
+
+const Auth: React.FC<AuthProps> = ({ verifyOnly = false }) => {
   const { setUserRole, setOnboarded, setVerified, setStaffProfile } = useApp();
 
   const [role, setRole] = useState<UserRole>(UserRole.USER);
@@ -27,46 +37,31 @@ const Auth: React.FC = () => {
       return;
     }
 
+    if (verifyOnly && isSignUp) {
+      setError('Sign up is disabled for this flow.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // 1️⃣ Firebase Auth (Login or SignUp)
+      // 1️⃣ Firebase Auth
       if (isSignUp) {
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
 
-      // 2️⃣ Wait for auth state to settle
-      await new Promise(res => setTimeout(res, 500));
-
       const user = auth.currentUser;
       if (!user) {
-        throw new Error("Authentication failed - no user found");
+        throw new Error('Authentication failed. Please try again.');
       }
-
-      // 3️⃣ Get fresh token
-      const token = await user.getIdToken(true);
 
       // =========================
       // 👨‍🎓 STUDENT FLOW
       // =========================
       if (role === UserRole.USER) {
-        const res = await fetch('http://localhost:8000/auth/verify-student', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({})
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || `Verification failed: ${res.status}`);
-        }
-
-        const data = await res.json();
+        await verifyStudent();
 
         setUserRole(UserRole.USER);
         setVerified(true);
@@ -77,53 +72,12 @@ const Auth: React.FC = () => {
       // =========================
       // 👔 STAFF FLOW
       // =========================
-      
-      // 1. Verify Staff
-      const verifyRes = await fetch('http://localhost:8000/auth/verify-staff', {
-        method: 'POST',
-        headers: { 
-          Authorization: `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({})
-      });
-      
-      if (!verifyRes.ok) {
-        const errData = await verifyRes.json().catch(() => ({}));
-        throw new Error(errData.message || "Staff verification failed");
-      }
+      await verifyStaff();
 
-      const verifyData = await verifyRes.json();
+      // Idempotent – backend can ignore if already active
+      await activateStaff().catch(() => {});
 
-      // 2. Activate Staff (if status is inactive)
-      const activateRes = await fetch('http://localhost:8000/staff/activate', {
-        method: 'POST',
-        headers: { 
-          Authorization: `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({})
-      });
-      
-      if (!activateRes.ok) {
-        const errData = await activateRes.json().catch(() => ({}));
-        // Don't throw error if already active
-        if (!errData.message?.includes('Already active')) {
-          console.warn("Staff activation warning:", errData.message);
-        }
-      }
-
-      // 3. Get Profile
-      const profileRes = await fetch('http://localhost:8000/staff/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (!profileRes.ok) {
-        const errData = await profileRes.json().catch(() => ({}));
-        throw new Error(errData.message || "Failed to load staff profile");
-      }
-      
-      const profile = await profileRes.json();
+      const profile = await getStaffProfile();
 
       setStaffProfile({
         role: profile.role,
@@ -135,11 +89,9 @@ const Auth: React.FC = () => {
       setUserRole(UserRole.STAFF);
       setVerified(true);
       setOnboarded(true);
-
     } catch (err: any) {
-      console.error("Auth Error:", err);
+      console.error('Auth Error:', err);
 
-      // Detailed Error Handling
       if (err?.code === 'auth/user-not-found' || err?.code === 'auth/invalid-credential') {
         setError('Account not found. Please check your credentials.');
       } else if (err?.code === 'auth/wrong-password') {
@@ -150,14 +102,6 @@ const Auth: React.FC = () => {
         setError('Password should be at least 6 characters.');
       } else if (err?.code === 'auth/invalid-email') {
         setError('Invalid email address.');
-      } else if (err.message?.includes('college domain')) {
-        setError('Your college is not registered with GreenPlate.');
-      } else if (err.message?.includes('not a registered staff')) {
-        setError('You are not registered as staff. Please contact your manager.');
-      } else if (err.message?.includes('Staff accounts are not authorized')) {
-        setError('Staff accounts cannot log in as students. Please select Staff role.');
-      } else if (err.message?.includes('Not authorized as student')) {
-        setError('This account is not authorized as a student.');
       } else {
         setError(err.message || 'Authentication failed. Please try again.');
       }
@@ -167,7 +111,7 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#F9F9F9] font-sans text-[#1d1d1f]">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#F9F9F9]">
       <div className="w-full max-w-md bg-white p-10 rounded-[32px] shadow-sm border border-gray-100">
         <div className="flex justify-center mb-8">
           <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center">
@@ -176,7 +120,7 @@ const Auth: React.FC = () => {
         </div>
 
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
             {isSignUp ? 'Create your account' : 'Sign in to GreenPlate'}
           </h2>
           <p className="text-sm text-gray-500">
@@ -263,19 +207,18 @@ const Auth: React.FC = () => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button 
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setError(null);
               }}
               className="text-green-600 font-medium hover:underline"
             >
-              {isSignUp ? "Sign In" : "Sign Up"}
+              {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>
           </p>
         </div>
-
       </div>
     </div>
   );
